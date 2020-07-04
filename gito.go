@@ -11,22 +11,16 @@ import (
 )
 
 type G struct {
-	path []string
+	config *Config
 }
 
-func New(path string) *G {
-	paths := []string{}
-	for _, dir := range filepath.SplitList(path) {
-		paths = append(paths, filepath.Join(dir, "src"))
-
-	}
-
-	return &G{path: paths}
+func New(config *Config) *G {
+	return &G{config: config}
 }
 
 func (g *G) Get(repo string) error {
 	// where repo will live in the PATH
-	fullPath := filepath.Join(g.path[0], repo)
+	fullPath := filepath.Join(g.config.active.path[0], repo)
 
 	err := os.MkdirAll(fullPath, 0755)
 	if err != nil {
@@ -34,22 +28,28 @@ func (g *G) Get(repo string) error {
 		return err
 	}
 
-	if err := doGitClone(repo, fullPath); err != nil {
-		// TODO
+	if exists, err := doGitClone(repo, fullPath); exists {
+		return fmt.Errorf("something already exists at %q", fullPath)
+	} else if err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func doGitClone(repo, fullPath string) error {
+func doGitClone(repo, fullPath string) (bool, error) {
+	_, err := os.Stat(fullPath)
+	if !os.IsNotExist(err) {
+		return true, nil
+	}
+
 	gitRepo := fmt.Sprintf("https://%s.git", repo) // simpler than ssh
 	cmd := exec.Command("git", "clone", "--", gitRepo, fullPath)
 	buf := &bytes.Buffer{}
 	cmd.Stderr = buf
 	if err := cmd.Run(); err != nil {
 		// TODO
-		return fmt.Errorf("error cloning repo: %v, stderr: %q", err, buf.String())
+		return false, fmt.Errorf("error cloning repo: %v, stderr: %q", err, buf.String())
 	}
 
 	cmd = exec.Command("git", "submodule", "update", "--init", "--recursive")
@@ -58,15 +58,15 @@ func doGitClone(repo, fullPath string) error {
 	cmd.Dir = fullPath
 	if err := cmd.Run(); err != nil {
 		// TODO
-		return fmt.Errorf("error updating submodules: %v, stdout: %s", err, buf.String())
+		return false, fmt.Errorf("error updating submodules: %v, stderr: %s", err, buf.String())
 	}
 
-	return nil
+	return false, nil
 }
 
 func (g *G) Where(repo string) (string, error) {
-	for _, dir := range g.path {
-		fullPath, ok := in(repo, dir, "", 0)
+	for _, dir := range g.config.active.path {
+		fullPath, ok := in(repo, filepath.Join(dir), "", 0)
 		if ok {
 			return fullPath, nil
 		}
@@ -89,9 +89,9 @@ func in(repo, dir, soFar string, depth int) (string, bool) {
 
 	// in case repo is a partial name (ie r-medina/gito)
 	fullPath := filepath.Join(soFar, dir, repo)
-	_, err := os.Stat(fullPath)
+	f, err := os.Stat(fullPath)
 	if err == nil {
-		return fullPath, true
+		return fullPath, f.IsDir() // make sure we're not getting a file
 	}
 
 	// don't want to go past repositories

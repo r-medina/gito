@@ -1,17 +1,32 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"go/build"
 	"os"
+	"path/filepath"
 
 	"github.com/r-medina/gito"
 )
 
+var workspace string
+
+func init() {
+	flag.StringVar(&workspace, "workspace", "", "which workspace to use - setup ~/.config/gito/gito.json")
+	if workspace == "" {
+		flag.StringVar(&workspace, "w", "", "which workspace to use - setup ~/.config/gito/gito.json")
+	}
+}
+
 func usage() {
-	fmt.Printf(`usage: gito <command> [<args> ...]
+	fmt.Printf(`usage: gito [<flags>] <command> [<args> ...]
 
 Manage code intelligently.
+
+See http://github.com/r-medina/gito for documentation.
+
+Flags:
+  --workspace=WORKSPACE which workspace to use (defaults to first in config)
 
 Commands:
   help
@@ -78,6 +93,34 @@ func main() {
 		os.Exit(1)
 	}
 
-	g := gito.New(build.Default.GOPATH)
+	newConfig := false
+	home, err := os.UserHomeDir()
+	fname := filepath.Join(home, ".config/gito/gito.yaml")
+	f, err := os.OpenFile(fname, os.O_SYNC|os.O_RDONLY, 0622)
+	if os.IsNotExist(err) {
+		newConfig = true
+		if err = os.MkdirAll(filepath.Join(home, "/.config/gito"), 0755); err != nil {
+			fmt.Fprintf(os.Stderr, "error making config dir: %v", err)
+			os.Exit(1)
+		}
+
+		f, err = os.OpenFile(fname, os.O_SYNC|os.O_WRONLY|os.O_CREATE, 0622)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "error making config file: %v", err)
+			os.Exit(1)
+		}
+	} else if err != nil {
+		fmt.Fprintf(os.Stderr, "error opening config: %v", err)
+		os.Exit(1)
+	}
+
+	config, err := gito.LoadConfig(f, newConfig, workspace)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "error loading config: %v\n", err)
+		os.Exit(1)
+	}
+
+	g := gito.New(config)
+	defer f.Close()
 	cmds[os.Args[1]](g, os.Args[2:]...)
 }

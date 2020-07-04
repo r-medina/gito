@@ -8,15 +8,22 @@ with opinions on where code should live.
 The value add of this will be that it will make finding code and
 navigating to it easier.
 
+Even though go moved away from it, the model of having all your code
+namespaced by git url makes sense to me - if you can find it easily.
+
 * Download code
 
   #+begin_src text :noeval
     gito get github.com/r-medina/gito # defults to GOPATH[0]/src/github.com/...
   #+end_src
 
+  If there is no =GITOPATH= set, it uses =GOPATH[0]/src= as the
+  default location.
+
   the =get= command is the only one that needs a full url - from then
   on you can refer to repos by a subset of their names (eg
   "r-medina/gito" or "gito")
+
 
 * Find out where repo is
 
@@ -57,14 +64,24 @@ navigating to it easier.
 * TODO Use GITOPATH instead of GOPATH
 
   not yet implemented
-  
+
+** TODO warning: no gitopath or gopath
+
+
+* TODO make alias for repo
+
 
 * Usage
 
   #+begin_src text
-    usage: gito <command> [<args> ...]
+    usage: gito [<flags>] <command> [<args> ...]
 
     Manage code intelligently.
+
+    See http://github.com/r-medina/gito for documentation.
+
+    Flags:
+      --workspace=WORKSPACE which workspace to use (defaults to first in config)
 
     Commands:
       help
@@ -81,9 +98,24 @@ navigating to it easier.
   #+end_src
 
 
+* TODO GITOPATH
+
+  gito expects an environment variable =GITOPATH= for knowing where
+  your code lives. =GITOPATH= works very similarly to [[https://golang.org/cmd/go/#hdr-GOPATH_environment_variable][GOPATH]] in that
+  it can take multiple workspaces and looks for code in =src/=. The
+  idea is to customize this as little as possible so "it just works."
+
+
+* Caveats
+
+  - only works with git
+
+
 * Notes while developing
 
-  might actually be useful to run its own database
+  might actually be useful to run its own database for aliases and
+  custom locations (gob file @ ~/.config/gito - also gito.json can
+  live there)
 
   default location is in GOPATH, optional argument for path
 
@@ -94,8 +126,33 @@ navigating to it easier.
 
   [[https://golang.org/pkg/path/filepath/#SplitList][filepath.SplitList]] for splitting PATH style variables
 
+  Config:
+
+  #+begin_src yaml
+    workspaces:
+      - name: personal
+        path: "~"
+        aliases:
+          g: gito
+          d: dotfiles
+        custom:
+          dotfiles: "~/.dotfiles"
+      - name: work
+        path: "~/gh"
+        overrideSrc: yes
+        aliases:
+          ghe: super-secret
+        custom:
+          super-secret: "~/somewhereElse/theMoneyMaker
+  #+end_src
+
+  - I don't want their to be an environment variable.
+  - When user uses gito for first time, they get a default workspace
+    with GOPATH
 
 * TODOs
+
+** TODO allow for configuration and different profiles
 
 ** TODO make sure url command works with things other than github
 

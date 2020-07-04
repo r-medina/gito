@@ -1,29 +1,85 @@
 package gito
 
 import (
+	"io"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
+type mockConfigFile struct {
+	io.Reader
+}
+
+func newMockConfigFile(s string) File {
+	return &mockConfigFile{
+		Reader: strings.NewReader(s),
+	}
+}
+
+func (f *mockConfigFile) Write(p []byte) (n int, err error) {
+	return 0, nil
+}
+
+func (f *mockConfigFile) Sync() error {
+	return nil
+}
+
+func (f *mockConfigFile) Truncate(int64) error {
+	return nil
+}
+
+func (f *mockConfigFile) Seek(offset int64, whence int) (int64, error) {
+	return 0, nil
+}
+
 func TestLoad(t *testing.T) {
-	r := strings.NewReader(`workspaces:
-    personal:
+	r := `workspaces:
+    - name: personal
       path: "~"
       aliases:
           g: gito
           d: dotfiles
       custom:
           dotfiles: "~/.dotfiles"
-    work:
+    - name: work
       path: "~/gh"
       overrideSrc: yes
       aliases:
-          ghe: enterprise2`)
+          ghe: super-secret
+      custom:
+          super-secret: "~/somewhereElse/theMoneyMaker"`
 
-	config, err := loadConfig(r)
+	config, err := LoadConfig(newMockConfigFile(r), false, "")
 	if err != nil {
 		t.Fatalf("unexpected error loading config: %v", err)
 	}
 
-	t.Logf("CONFIG: %v", config)
+	got := config.Workspaces[0]
+	want := &Workspace{
+		Name:    "personal",
+		Path:    "~",
+		Aliases: map[string]string{"g": "gito", "d": "dotfiles"},
+		Custom:  map[string]string{"dotfiles": "~/.dotfiles"},
+	}
+
+	assert := assert.New(t)
+	assert.Equal(want, got)
+	// if !reflect.DeepEqual(got, want) {
+	// 	t.Errorf("loading config failed - wanted\n%v, got\n%v", want, got)
+	// }
+
+	got = config.Workspaces[1]
+	want = &Workspace{
+		Name:        "work",
+		OverrideSrc: true,
+		Path:        "~/gh",
+		Aliases:     map[string]string{"ghe": "super-secret"},
+		Custom:      map[string]string{"super-secret": "~/somewhereElse/theMoneyMaker"},
+	}
+	assert.Equal(want, got)
+	// if !reflect.DeepEqual(got, want) {
+	// t.Errorf("loading config failed - wanted:\n%v, got:\n%v", want, got)
+	// }
 }
