@@ -55,6 +55,11 @@ var cmds = map[string]func(_ *gito.G, args ...string){
 }
 
 func main() {
+	if len(os.Args) < 3 {
+		usage()
+		os.Exit(1)
+	}
+
 	g := gito.New(build.Default.GOPATH)
 	cmds[os.Args[1]](g, os.Args[2:]...)
 }
