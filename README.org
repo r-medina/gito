@@ -17,9 +17,6 @@ namespaced by git url makes sense to me - if you can find it easily.
     gito get github.com/r-medina/gito # defults to GOPATH[0]/src/github.com/...
   #+end_src
 
-  If there is no =GITOPATH= set, it uses =GOPATH[0]/src= as the
-  default location.
-
   the =get= command is the only one that needs a full url - from then
   on you can refer to repos by a subset of their names (eg
   "r-medina/gito" or "gito")
@@ -61,13 +58,6 @@ namespaced by git url makes sense to me - if you can find it easily.
   #+end_src
 
 
-* TODO Use GITOPATH instead of GOPATH
-
-  not yet implemented
-
-** TODO warning: no gitopath or gopath
-
-
 * TODO make alias for repo
 
 
@@ -82,13 +72,14 @@ namespaced by git url makes sense to me - if you can find it easily.
 
     Flags:
       --workspace=WORKSPACE which workspace to use (defaults to first in config)
+        -w
 
     Commands:
       help
 	show this message
 
       get <repo>
-	download a repo into your gopath (eg github.com/r-medina/gito)
+	download a repo
 
       where <repo>
 	find out where repo lives
@@ -98,13 +89,25 @@ namespaced by git url makes sense to me - if you can find it easily.
   #+end_src
 
 
-* TODO GITOPATH
+* Example Config
 
-  gito expects an environment variable =GITOPATH= for knowing where
-  your code lives. =GITOPATH= works very similarly to [[https://golang.org/cmd/go/#hdr-GOPATH_environment_variable][GOPATH]] in that
-  it can take multiple workspaces and looks for code in =src/=. The
-  idea is to customize this as little as possible so "it just works."
-
+  #+begin_src yaml
+    workspaces:
+        - name: personal
+          path: "/Users/ricky"
+          aliases:
+              g: gito
+              d: dotfiles
+          custom:
+              dotfiles: "/Users/ricky/.dotfiles"
+        - name: work
+          path: "/Users/ricky/gh"
+          overrideSrc: yes
+          aliases:
+              ghe: super-secret
+          custom:
+              super-secret: "somewhereElse/theMoneyMaker
+  #+end_src
 
 * Caveats
 

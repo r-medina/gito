@@ -27,13 +27,14 @@ See http://github.com/r-medina/gito for documentation.
 
 Flags:
   --workspace=WORKSPACE which workspace to use (defaults to first in config)
+    -w
 
 Commands:
   help
     show this message
 
   get <repo>
-    download a repo into your gopath (eg github.com/r-medina/gito)
+    download a repo
 
   where <repo>
     find out where repo lives

@@ -37,19 +37,19 @@ func (f *mockConfigFile) Seek(offset int64, whence int) (int64, error) {
 func TestLoad(t *testing.T) {
 	r := `workspaces:
     - name: personal
-      path: "~"
+      path: "/Users/ricky"
       aliases:
           g: gito
           d: dotfiles
       custom:
-          dotfiles: "~/.dotfiles"
+          dotfiles: "/Users/ricky/.dotfiles"
     - name: work
-      path: "~/gh"
+      path: "/Users/ricky/gh"
       overrideSrc: yes
       aliases:
           ghe: super-secret
       custom:
-          super-secret: "~/somewhereElse/theMoneyMaker"`
+          super-secret: "somewhereElse/theMoneyMaker"`
 
 	config, err := LoadConfig(newMockConfigFile(r), false, "")
 	if err != nil {
