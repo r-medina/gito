@@ -11,15 +11,15 @@ navigating to it easier.
 What it will look like:
 #+begin_src text
   gito get github.com/r-medina/gito # defults to GOPATH[0]/src/github.com/...
-  gito get r-medina/gito # assumes github
-  gito where r-medina/gito
+  gito where r-medina/gito # $HOME/go/src/github.com/r-medina/gito
 
-  gito set r-medina/gito path # saves the location information to path
   gito where r-medina/gito # > path
 
   cd $(gito where r-medina/gito)
+  cd $(gito where gito)
 
-  gito get somelonngname/repo
+  gito set r-medina/gito path # saves the location information to path
+  gito get github.com/somelonngname/repo
   cd $(gito where repo)
 #+end_src
 

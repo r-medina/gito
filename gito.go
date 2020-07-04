@@ -43,16 +43,6 @@ func (g *G) Get(repo string) error {
 
 func (g *G) Where(repo string) (string, error) {
 	for _, dir := range g.path {
-		fullPath := filepath.Join(dir, repo)
-		_, err := os.Stat(fullPath)
-		if err == nil {
-			return fullPath, nil
-		}
-	}
-
-	// if user passed name of repo without owner
-
-	for _, dir := range g.path {
 		fullPath, ok := in(repo, dir, "", 0)
 		if ok {
 			return fullPath, nil
