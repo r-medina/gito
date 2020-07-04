@@ -1,5 +1,6 @@
 #+TITLE: gito
 
+#+PROPERTY: header-args :eval no
 
 Tool for managing source code more like =go get= - that is to say,
 with opinions on where code should live.
@@ -7,35 +8,97 @@ with opinions on where code should live.
 The value add of this will be that it will make finding code and
 navigating to it easier.
 
+* Download code
 
-What it will look like:
-#+begin_src text
-  gito get github.com/r-medina/gito # defults to GOPATH[0]/src/github.com/...
-  gito where r-medina/gito # $HOME/go/src/github.com/r-medina/gito
+  #+begin_src text :noeval
+    gito get github.com/r-medina/gito # defults to GOPATH[0]/src/github.com/...
+  #+end_src
 
-  gito where r-medina/gito # > path
+  the =get= command is the only one that needs a full url - from then
+  on you can refer to repos by a subset of their names (eg
+  "r-medina/gito" or "gito")
 
-  cd $(gito where r-medina/gito)
-  cd $(gito where gito)
+* Find out where repo is
 
-  gito set r-medina/gito path # saves the location information to path
-  gito get github.com/somelonngname/repo
-  cd $(gito where repo)
-
-  gito url gito # https://github.com/r-medina/gito
-#+end_src
+  #+begin_src shell
+    gito where r-medina/gito # $HOME/go/src/github.com/r-medina/gito
+  #+end_src
 
 
-will put everything in the first directory listed by $GOPATH
+  Can also find code with just repo name
+  #+begin_src shell
+    gito where gito # $HOME/go/src/github.com/r-medina/gito
+  #+end_src
 
-[[https://golang.org/pkg/path/filepath/#SplitList][filepath.SplitList]] for splitting PATH style variables
+  Which you can easily cd into
+  #+begin_src shell
+    cd $(gito where gito)
+  #+end_src
 
-* Thoughts
+
+* Find repo online
+
+  #+begin_src shell
+    gito url gito # https://github.com/r-medina/gito
+    open $(gito url gito) # opens in brownser
+  #+end_src
+
+
+* TODO Tell gito where a repo lives
+
+  not yet implemented
+
+  #+begin_src shell
+    gito set r-medina/gito <path> # saves the location information to path
+    gito get gito # path
+  #+end_src
+
+
+* TODO Use GITOPATH instead of GOPATH
+
+  not yet implemented
+  
+
+* Usage
+
+  #+begin_src text
+    usage: gito <command> [<args> ...]
+
+    Manage code intelligently.
+
+    Commands:
+      help
+	show this message
+
+      get <repo>
+	download a repo into your gopath (eg github.com/r-medina/gito)
+
+      where <repo>
+	find out where repo lives
+
+      url <repo>
+	get the url of the repo (for web browsing)
+  #+end_src
+
+
+* Notes while developing
 
   might actually be useful to run its own database
 
   default location is in GOPATH, optional argument for path
 
   thinking of using urfave/cli
+  - actually, not using a cli framework has been fine
 
-  mkdir -p: https://gobyexample.com/directories
+  =mkdir -p=: https://gobyexample.com/directories
+
+  [[https://golang.org/pkg/path/filepath/#SplitList][filepath.SplitList]] for splitting PATH style variables
+
+
+* TODOs
+
+** TODO make sure url command works with things other than github
+
+** TODO commands check for =.git= before returning results
+
+** DONE make sure url command works for ssh and http clones
