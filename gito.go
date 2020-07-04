@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 type G struct {
@@ -36,6 +37,28 @@ func (g *G) Get(repo string) error {
 	if err := doGitClone(repo, fullPath); err != nil {
 		// TODO
 		return err
+	}
+
+	return nil
+}
+
+func doGitClone(repo, fullPath string) error {
+	gitRepo := fmt.Sprintf("https://%s.git", repo) // simpler than ssh
+	cmd := exec.Command("git", "clone", "--", gitRepo, fullPath)
+	buf := &bytes.Buffer{}
+	cmd.Stderr = buf
+	if err := cmd.Run(); err != nil {
+		// TODO
+		return fmt.Errorf("error cloning repo: %v, stderr: %q", err, buf.String())
+	}
+
+	cmd = exec.Command("git", "submodule", "update", "--init", "--recursive")
+	buf.Reset()
+	cmd.Stderr = buf
+	cmd.Dir = fullPath
+	if err := cmd.Run(); err != nil {
+		// TODO
+		return fmt.Errorf("error updating submodules: %v, stdout: %s", err, buf.String())
 	}
 
 	return nil
@@ -95,24 +118,28 @@ func in(repo, dir, soFar string, depth int) (string, bool) {
 	return "", false
 }
 
-func doGitClone(repo, fullPath string) error {
-	gitRepo := fmt.Sprintf("https://%s.git", repo) // simpler than ssh
-	cmd := exec.Command("git", "clone", "--", gitRepo, fullPath)
-	buf := &bytes.Buffer{}
-	cmd.Stderr = buf
-	if err := cmd.Run(); err != nil {
-		// TODO
-		return fmt.Errorf("error cloning repo: %v, stderr: %q", err, buf.String())
+func (g *G) URL(repo string) (string, error) {
+	fullPath, err := g.Where(repo)
+	if err != nil {
+		return "", err
 	}
 
-	cmd = exec.Command("git", "submodule", "update", "--init", "--recursive")
-	buf.Reset()
-	cmd.Stderr = buf
+	cmd := exec.Command("git", "remote", "get-url", "origin")
 	cmd.Dir = fullPath
+	buf := &bytes.Buffer{}
+	cmd.Stdout = buf
 	if err := cmd.Run(); err != nil {
-		// TODO
-		return fmt.Errorf("error updating submodules: %v, stdout: %s", err, buf.String())
+		return "", fmt.Errorf("error getting git remote for %q", repo)
 	}
 
-	return nil
+	url := buf.String()
+	url = strings.TrimSpace(url)
+	url = strings.TrimPrefix(url, "git@")
+	url = strings.Replace(url, ":", "/", 1)
+	url = strings.TrimSuffix(url, ".git")
+	buf.Reset()
+	buf.WriteString("https://")
+	buf.WriteString(url)
+
+	return buf.String(), nil
 }

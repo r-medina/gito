@@ -21,6 +21,8 @@ What it will look like:
   gito set r-medina/gito path # saves the location information to path
   gito get github.com/somelonngname/repo
   cd $(gito where repo)
+
+  gito url gito # https://github.com/r-medina/gito
 #+end_src
 
 

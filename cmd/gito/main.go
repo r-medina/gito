@@ -52,6 +52,21 @@ var cmds = map[string]func(_ *gito.G, args ...string){
 
 		fmt.Println(fullPath)
 	},
+
+	"url": func(g *gito.G, args ...string) {
+		if len(args) != 1 {
+			usage()
+			os.Exit(1)
+		}
+
+		url, err := g.URL(args[0])
+		if err != nil {
+			fmt.Printf("%v\n", err)
+			os.Exit(1)
+		}
+
+		fmt.Println(url)
+	},
 }
 
 func main() {
