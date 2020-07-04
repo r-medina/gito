@@ -134,12 +134,21 @@ func (g *G) URL(repo string) (string, error) {
 
 	url := buf.String()
 	url = strings.TrimSpace(url)
-	url = strings.TrimPrefix(url, "git@")
-	url = strings.Replace(url, ":", "/", 1)
-	url = strings.TrimSuffix(url, ".git")
-	buf.Reset()
-	buf.WriteString("https://")
-	buf.WriteString(url)
 
-	return buf.String(), nil
+	if strings.HasPrefix(url, "git@") {
+		// TODO is this  the best implementation?
+
+		url = strings.TrimPrefix(url, "git@")
+		url = strings.Replace(url, ":", "/", 1)
+		buf.Reset()
+		buf.WriteString("https://")
+		buf.WriteString(url)
+		url = buf.String()
+	}
+
+	// when origin is specified with http, all we need to do is trim suffix
+
+	url = strings.TrimSuffix(url, ".git")
+
+	return url, nil
 }

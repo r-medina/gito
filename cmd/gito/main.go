@@ -22,6 +22,9 @@ Commands:
 
   where <repo>
     find out where repo lives
+
+  url <repo>
+    get the url of the repo (for web browsing)
 `)
 }
 
