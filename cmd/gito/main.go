@@ -28,7 +28,7 @@ Commands:
 var cmds = map[string]func(_ *gito.G, args ...string){
 	"get": func(g *gito.G, args ...string) {
 		if len(args) != 1 {
-			fmt.Println(usage)
+			usage()
 			os.Exit(1)
 		}
 
@@ -40,16 +40,21 @@ var cmds = map[string]func(_ *gito.G, args ...string){
 
 	"where": func(g *gito.G, args ...string) {
 		if len(args) != 1 {
-			fmt.Println(usage)
+			usage()
 			os.Exit(1)
 		}
 
+		fullPath, err := g.Where(args[0])
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
+		fmt.Println(fullPath)
 	},
 }
 
 func main() {
 	g := gito.New(build.Default.GOPATH)
-
-	fmt.Println(os.Args)
 	cmds[os.Args[1]](g, os.Args[2:]...)
 }

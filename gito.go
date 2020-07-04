@@ -1,6 +1,7 @@
 package gito
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -33,21 +34,37 @@ func (g *G) Get(repo string) error {
 	return nil
 }
 
+func (g *G) Where(repo string) (string, error) {
+	for _, dir := range g.path {
+		fullPath := filepath.Join(dir, "src", repo)
+		f, err := os.Open(fullPath)
+		f.Close()
+		if err == nil {
+			return fullPath, nil
+		}
+	}
+
+	return "", fmt.Errorf("%q not found", repo)
+}
+
 func doGitClone(repo, fullPath string) error {
 	gitRepo := fmt.Sprintf("https://%s.git", repo)
 	cmd := exec.Command("git", "clone", "--", gitRepo, fullPath)
-	cmd.Stderr = os.Stderr
+	buf := &bytes.Buffer{}
+	cmd.Stderr = buf
 	if err := cmd.Run(); err != nil {
 		// TODO
-		return err
+		return fmt.Errorf("error cloning repo: %v, stderr: %q", err, buf.String())
 	}
 
-	// cmd = exec.Command("git", "submodule", "update", "--init", "--recursive")
-	// cmd.Path = fullPath
-	// if err := cmd.Run(); err != nil {
-	// 	// TODO
-	// 	return err
-	// }
+	cmd = exec.Command("git", "submodule", "update", "--init", "--recursive")
+	buf.Reset()
+	cmd.Stderr = buf
+	cmd.Dir = fullPath
+	if err := cmd.Run(); err != nil {
+		// TODO
+		return fmt.Errorf("error updating submodules: %v, stdout: %s", err, buf.String())
+	}
 
 	return nil
 }
