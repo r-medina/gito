@@ -1,15 +1,11 @@
 #+TITLE: gito
-
 #+PROPERTY: header-args :eval no
 
-Tool for managing source code more like =go get= - that is to say,
-with opinions on where code should live.
+Tool for managing source code more like =go get= (ie with opinions on
+where code should live).
 
 The value add of this will be that it will make finding code and
-navigating to it easier.
-
-Even though go moved away from it, the model of having all your code
-namespaced by git url makes sense to me - if you can find it easily.
+staying organized much easier.
 
 * Download code
 
@@ -17,9 +13,9 @@ namespaced by git url makes sense to me - if you can find it easily.
     gito get github.com/r-medina/gito # defults to GOPATH[0]/src/github.com/...
   #+end_src
 
-  the =get= command is the only one that needs a full url - from then
-  on you can refer to repos by a subset of their names (eg
-  "r-medina/gito" or "gito")
+  the =get= command is the only one that needs a full(ish) name/url -
+  from then on you can refer to repos by a subset of their names (eg
+  "r-medina/gito" or "gito").
 
 
 * Find out where repo is
@@ -43,7 +39,7 @@ namespaced by git url makes sense to me - if you can find it easily.
 * Find repo online
 
   #+begin_src shell
-    gito url gito # https://github.com/r-medina/gito
+    gito url gito         # https://github.com/r-medina/gito
     open $(gito url gito) # opens in brownser
   #+end_src
 
@@ -54,11 +50,24 @@ namespaced by git url makes sense to me - if you can find it easily.
 
   #+begin_src shell
     gito set r-medina/gito <path> # saves the location information to path
-    gito get gito # path
+    gito get r-medina/gito        # <path>
   #+end_src
 
 
 * TODO make alias for repo
+
+  not yet implemented
+
+  #+begin_src shell
+    gito alias g github.com/mvdan/garble
+    gito where g # $HOME/go/src/github.com/mvdan/garble
+  #+end_src
+
+  #+begin_src shell
+    gito alias d dotfiles
+    gito set dotfiles ~/.dotfiles # $HOME
+    cd $(gito where d)
+  #+end_src
 
 
 * Usage
@@ -91,6 +100,9 @@ namespaced by git url makes sense to me - if you can find it easily.
 
 * Example Config
 
+  gito cannot do shell expansion for now, so add full paths to the
+  config file.
+
   #+begin_src yaml
     workspaces:
         - name: personal
@@ -108,6 +120,7 @@ namespaced by git url makes sense to me - if you can find it easily.
           custom:
               super-secret: "somewhereElse/theMoneyMaker
   #+end_src
+
 
 * Caveats
 
@@ -152,6 +165,7 @@ namespaced by git url makes sense to me - if you can find it easily.
   - I don't want their to be an environment variable.
   - When user uses gito for first time, they get a default workspace
     with GOPATH
+
 
 * TODOs
 
