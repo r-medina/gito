@@ -2,20 +2,17 @@
 #+PROPERTY: header-args :eval no
 
 Tool for managing source code more like =go get= (ie with opinions on
-where code should live).
-
-The value add of this will be that it will make finding code and
-staying organized much easier.
+where code should live) - find code and stay organized easier!
 
 * Download code
 
   #+begin_src text :noeval
-    gito get github.com/r-medina/gito # defults to GOPATH[0]/src/github.com/...
+    gito get github.com/r-medina/gito # defults to GOPATH[0]/src/github.com/... or $HOME/src/...
   #+end_src
 
-  the =get= command is the only one that needs a full(ish) name/url -
-  from then on you can refer to repos by a subset of their names (eg
-  "r-medina/gito" or "gito").
+  the =get= command needs a full(ish) name/url - from then on you can
+  refer to repos by a subset of their names (eg "r-medina/gito" or
+  "gito").
 
 
 * Find out where repo is
@@ -53,6 +50,8 @@ staying organized much easier.
     gito get r-medina/gito        # <path>
   #+end_src
 
+  when a repo's location is set, only that name can be used, but you
+  can set =r-medina/gito= and =gito= to =<path>= so that both work!
 
 * TODO make alias for repo
 
