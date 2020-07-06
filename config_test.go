@@ -72,11 +72,10 @@ func TestLoad(t *testing.T) {
 
 	got = config.Workspaces[1]
 	want = &Workspace{
-		Name:        "work",
-		OverrideSrc: true,
-		Path:        "~/gh",
-		Aliases:     map[string]string{"ghe": "super-secret"},
-		Custom:      map[string]string{"super-secret": "~/somewhereElse/theMoneyMaker"},
+		Name:    "work",
+		Path:    "~/gh",
+		Aliases: map[string]string{"ghe": "super-secret"},
+		Custom:  map[string]string{"super-secret": "~/somewhereElse/theMoneyMaker"},
 	}
 	assert.Equal(want, got)
 	// if !reflect.DeepEqual(got, want) {

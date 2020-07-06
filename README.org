@@ -41,9 +41,7 @@ where code should live) - find code and stay organized easier!
   #+end_src
 
 
-* TODO Tell gito where a repo lives
-
-  not yet implemented
+* Tell gito where a repo lives
 
   #+begin_src shell
     gito set r-medina/gito <path> # saves the location information to path
@@ -53,9 +51,8 @@ where code should live) - find code and stay organized easier!
   when a repo's location is set, only that name can be used, but you
   can set =r-medina/gito= and =gito= to =<path>= so that both work!
 
-* TODO make alias for repo
 
-  not yet implemented
+* make alias for repo
 
   #+begin_src shell
     gito alias g github.com/mvdan/garble
@@ -89,7 +86,7 @@ where code should live) - find code and stay organized easier!
 
     Flags:
       --workspace=WORKSPACE which workspace to use (defaults to first in config)
-        -w
+	-w
 
     Commands:
       help
@@ -101,8 +98,14 @@ where code should live) - find code and stay organized easier!
       where <repo>
 	find out where repo lives
 
-      url <repo>
-	get the url of the repo (for web browsing)
+      url [<repo>|.]
+	get the url of the repo (for web browsing) - can also pass no argument or "." for current directory
+
+      alias <alias> <to>
+	alias a name to something - eg "k8s" -> "github.com/kubernetes/kubernetes"
+
+      set <alias> <location>
+	for code living outside your configured path, tell gito where to find it
   #+end_src
 
 
@@ -176,6 +179,8 @@ where code should live) - find code and stay organized easier!
 
 
 * TODOs
+
+** TODO nil check for getting active
 
 ** TODO allow for configuration and different profiles
 

@@ -24,7 +24,6 @@ func (g *G) Get(repo string) error {
 
 	err := os.MkdirAll(fullPath, 0755)
 	if err != nil {
-		// TODO
 		return err
 	}
 
@@ -48,7 +47,6 @@ func doGitClone(repo, fullPath string) (bool, error) {
 	buf := &bytes.Buffer{}
 	cmd.Stderr = buf
 	if err := cmd.Run(); err != nil {
-		// TODO
 		return false, fmt.Errorf("error cloning repo: %v, stderr: %q", err, buf.String())
 	}
 
@@ -57,7 +55,6 @@ func doGitClone(repo, fullPath string) (bool, error) {
 	cmd.Stderr = buf
 	cmd.Dir = fullPath
 	if err := cmd.Run(); err != nil {
-		// TODO
 		return false, fmt.Errorf("error updating submodules: %v, stderr: %s", err, buf.String())
 	}
 
@@ -65,6 +62,12 @@ func doGitClone(repo, fullPath string) (bool, error) {
 }
 
 func (g *G) Where(repo string) (string, error) {
+	repo, _ = g.config.active.Alias(repo)
+	path, ok := g.config.active.CustomPath(repo)
+	if ok {
+		return path, nil
+	}
+
 	for _, dir := range g.config.active.path {
 		fullPath, ok := in(repo, filepath.Join(dir), "", 0)
 		if ok {
@@ -139,8 +142,6 @@ func (g *G) URL(repo string) (string, error) {
 	url = strings.TrimSpace(url)
 
 	if strings.HasPrefix(url, "git@") {
-		// TODO is this  the best implementation?
-
 		url = strings.TrimPrefix(url, "git@")
 		url = strings.Replace(url, ":", "/", 1)
 		buf.Reset()
@@ -154,4 +155,21 @@ func (g *G) URL(repo string) (string, error) {
 	url = strings.TrimSuffix(url, ".git")
 
 	return url, nil
+}
+
+func (g *G) Alias(from, to string) error {
+	aliases := g.config.active.Aliases
+	// no nil check because config load does that
+	g.config.active.Aliases = aliases
+
+	aliases[from] = to
+
+	return g.config.Sync()
+}
+
+func (g *G) Set(name, loc string) error {
+	custom := g.config.active.Custom
+	custom[name] = loc
+
+	return g.config.Sync()
 }

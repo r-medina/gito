@@ -24,8 +24,37 @@ type Workspace struct {
 	path []string
 }
 
-func (c *Config) sync() error {
-	if err := c.f.Truncate(1); err != nil {
+func newWorkspace(name string) *Workspace {
+	return &Workspace{
+		Aliases: make(map[string]string),
+		Custom:  make(map[string]string),
+	}
+}
+
+func (ws *Workspace) Alias(alias string) (string, bool) {
+	to, ok := ws.Aliases[alias]
+	if !ok {
+		return alias, false
+	}
+
+	return to, true
+}
+
+func (ws *Workspace) CustomPath(alias string) (string, bool) {
+	to, ok := ws.Custom[alias]
+	if !ok {
+		return alias, false
+	}
+
+	return to, true
+}
+
+func (c *Config) Sync() error {
+	if err := c.f.Truncate(0); err != nil {
+		return err
+	}
+
+	if _, err := c.f.Seek(0, io.SeekStart); err != nil {
 		return err
 	}
 
@@ -46,6 +75,10 @@ type File interface {
 func LoadConfig(f File, newConfig bool, workspace string) (*Config, error) {
 	config := &Config{f: f}
 
+	if workspace == "" {
+		workspace = "default"
+	}
+
 	if newConfig {
 		path := os.Getenv("GOPATH")
 		if path == "" {
@@ -56,12 +89,7 @@ func LoadConfig(f File, newConfig bool, workspace string) (*Config, error) {
 			}
 		}
 
-		ws := &Workspace{}
-		if workspace == "" {
-			ws.Name = "default"
-		} else {
-			ws.Name = workspace
-		}
+		ws := newWorkspace(workspace)
 		ws.Path = path
 		ws.path = filepath.SplitList(path)
 		for i, path := range ws.path {
@@ -83,15 +111,23 @@ func LoadConfig(f File, newConfig bool, workspace string) (*Config, error) {
 		return nil, fmt.Errorf("error decoding yaml config: %w", err)
 	}
 
+	if len(config.Workspaces) == 0 {
+		ws := newWorkspace(workspace)
+		config.Workspaces = append(config.Workspaces, ws)
+		config.active = ws
+	}
+
 	for _, w := range config.Workspaces {
 		w.path = filepath.SplitList(w.Path)
 		if w.Name == workspace {
 			config.active = w
 		}
-	}
-
-	if workspace == "" {
-		config.active = config.Workspaces[0]
+		if w.Aliases == nil {
+			w.Aliases = make(map[string]string)
+		}
+		if w.Custom == nil {
+			w.Custom = make(map[string]string)
+		}
 	}
 
 	return config, nil

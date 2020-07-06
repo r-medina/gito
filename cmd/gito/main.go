@@ -39,8 +39,14 @@ Commands:
   where <repo>
     find out where repo lives
 
-  url <repo>
-    get the url of the repo (for web browsing)
+  url [<repo>|.]
+    get the url of the repo (for web browsing) - can also pass no argument or "." for current directory
+
+  alias <alias> <to>
+    alias a name to something - eg "k8s" -> "github.com/kubernetes/kubernetes"
+
+  set <alias> <location>
+    for code living outside your configured path, tell gito where to find it
 `)
 }
 
@@ -73,18 +79,46 @@ var cmds = map[string]func(_ *gito.G, args ...string){
 	},
 
 	"url": func(g *gito.G, args ...string) {
-		if len(args) != 1 {
+		if len(args) > 1 {
 			usage()
 			os.Exit(1)
 		}
+		path := "."
+		if len(args) == 1 {
+			path = args[0]
+		}
 
-		url, err := g.URL(args[0])
+		url, err := g.URL(path)
 		if err != nil {
 			fmt.Printf("%v\n", err)
 			os.Exit(1)
 		}
 
 		fmt.Println(url)
+	},
+
+	"alias": func(g *gito.G, args ...string) {
+		if len(args) != 2 {
+			usage()
+			os.Exit(1)
+		}
+
+		if err := g.Alias(args[0], args[1]); err != nil {
+			fmt.Printf("%v\n", err)
+			os.Exit(1)
+		}
+	},
+
+	"set": func(g *gito.G, args ...string) {
+		if len(args) != 2 {
+			usage()
+			os.Exit(1)
+		}
+
+		if err := g.Set(args[0], args[1]); err != nil {
+			fmt.Printf("%v\n", err)
+			os.Exit(1)
+		}
 	},
 }
 
@@ -97,7 +131,7 @@ func main() {
 	newConfig := false
 	home, err := os.UserHomeDir()
 	fname := filepath.Join(home, ".config/gito/gito.yaml")
-	f, err := os.OpenFile(fname, os.O_SYNC|os.O_RDONLY, 0622)
+	f, err := os.OpenFile(fname, os.O_SYNC|os.O_RDWR, 0622)
 	if os.IsNotExist(err) {
 		newConfig = true
 		if err = os.MkdirAll(filepath.Join(home, "/.config/gito"), 0755); err != nil {
