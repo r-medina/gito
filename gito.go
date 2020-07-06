@@ -119,13 +119,16 @@ func in(repo, dir, soFar string, depth int) (string, bool) {
 }
 
 func (g *G) URL(repo string) (string, error) {
-	fullPath, err := g.Where(repo)
-	if err != nil {
-		return "", err
+	cmd := exec.Command("git", "remote", "get-url", "origin")
+
+	if repo != "." {
+		fullPath, err := g.Where(repo)
+		if err != nil {
+			return "", err
+		}
+		cmd.Dir = fullPath
 	}
 
-	cmd := exec.Command("git", "remote", "get-url", "origin")
-	cmd.Dir = fullPath
 	buf := &bytes.Buffer{}
 	cmd.Stdout = buf
 	if err := cmd.Run(); err != nil {

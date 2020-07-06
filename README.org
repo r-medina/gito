@@ -69,6 +69,15 @@ where code should live) - find code and stay organized easier!
   #+end_src
 
 
+* Use different workspaces
+
+  see config for how to set these up, but
+
+  #+begin_src shell
+    gito -w=work where gh # $HOME/where-i-keep-work-code/src/github.com/github
+  #+end_src
+
+
 * Usage
 
   #+begin_src text
@@ -173,5 +182,8 @@ where code should live) - find code and stay organized easier!
 ** TODO make sure url command works with things other than github
 
 ** TODO commands check for =.git= before returning results
+
+** DONE make url command work for current directory with "."
+   CLOSED: [2020-07-06 Mon 10:45]
 
 ** DONE make sure url command works for ssh and http clones
