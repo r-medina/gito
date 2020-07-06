@@ -180,13 +180,20 @@ where code should live) - find code and stay organized easier!
 
 * TODOs
 
-** TODO nil check for getting active
+** TODO tests
 
-** TODO allow for configuration and different profiles
+** TODO nil check for getting active workspace
 
 ** TODO make sure url command works with things other than github
 
-** TODO commands check for =.git= before returning results
+** DONE commands check for =.git= before returning results
+   CLOSED: [2020-07-06 Mon 18:26]
+
+   also, need better support for betting user folders - so "where
+   kubernetes" returns kubernetes/kubernetes and not just the parent
+
+** DONE allow for configuration and different profiles
+   CLOSED: [2020-07-06 Mon 18:06]
 
 ** DONE make url command work for current directory with "."
    CLOSED: [2020-07-06 Mon 10:45]

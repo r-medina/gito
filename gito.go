@@ -85,15 +85,20 @@ func in(repo, dir, soFar string, depth int) (string, bool) {
 		return "", false
 	}
 
+	fullPath := filepath.Join(soFar, dir, repo)
+
 	// found it
-	if repo == dir {
-		return filepath.Join(soFar, repo), true
+
+	_, err := os.Stat(filepath.Join(fullPath, ".git"))
+	isRepo := !os.IsNotExist(err)
+
+	if repo == dir && isRepo {
+		return fullPath, true
 	}
 
 	// in case repo is a partial name (ie r-medina/gito)
-	fullPath := filepath.Join(soFar, dir, repo)
 	f, err := os.Stat(fullPath)
-	if err == nil {
+	if err == nil && isRepo {
 		return fullPath, f.IsDir() // make sure we're not getting a file
 	}
 
@@ -114,7 +119,7 @@ func in(repo, dir, soFar string, depth int) (string, bool) {
 
 		fullPath, ok := in(repo, file.Name(), filepath.Join(soFar, dir), depth+1)
 		if ok {
-			return fullPath, ok
+			return fullPath, true
 		}
 	}
 
