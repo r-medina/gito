@@ -26,6 +26,7 @@ type Workspace struct {
 
 func newWorkspace(name string) *Workspace {
 	return &Workspace{
+		Name:    name,
 		Aliases: make(map[string]string),
 		Custom:  make(map[string]string),
 	}
@@ -67,7 +68,7 @@ func (c *Config) Sync() error {
 }
 
 type File interface {
-	io.ReadWriteSeeker // TODO
+	io.ReadWriteSeeker
 	Sync() error
 	Truncate(int64) error
 }
@@ -112,13 +113,17 @@ func LoadConfig(f File, newConfig bool, workspace string) (*Config, error) {
 	}
 
 	if len(config.Workspaces) == 0 {
-		ws := newWorkspace(workspace)
-		config.Workspaces = append(config.Workspaces, ws)
-		config.active = ws
+		w := newWorkspace(workspace)
+		config.Workspaces = append(config.Workspaces, w)
+		config.active = w
 	}
 
 	for _, w := range config.Workspaces {
 		w.path = filepath.SplitList(w.Path)
+		for i, path := range w.path {
+			w.path[i] = filepath.Join(path, "src")
+		}
+
 		if w.Name == workspace {
 			config.active = w
 		}

@@ -22,7 +22,7 @@ func (g *G) Get(repo string) error {
 	// where repo will live in the PATH
 	fullPath := filepath.Join(g.config.active.path[0], repo)
 
-	err := os.MkdirAll(fullPath, 0755)
+	err := os.MkdirAll(filepath.Dir(fullPath), 0755)
 	if err != nil {
 		return err
 	}
