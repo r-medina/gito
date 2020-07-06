@@ -66,9 +66,6 @@ func TestLoad(t *testing.T) {
 
 	assert := assert.New(t)
 	assert.Equal(want, got)
-	// if !reflect.DeepEqual(got, want) {
-	// 	t.Errorf("loading config failed - wanted\n%v, got\n%v", want, got)
-	// }
 
 	got = config.Workspaces[1]
 	want = &Workspace{
@@ -78,7 +75,4 @@ func TestLoad(t *testing.T) {
 		Custom:  map[string]string{"super-secret": "~/somewhereElse/theMoneyMaker"},
 	}
 	assert.Equal(want, got)
-	// if !reflect.DeepEqual(got, want) {
-	// t.Errorf("loading config failed - wanted:\n%v, got:\n%v", want, got)
-	// }
 }
