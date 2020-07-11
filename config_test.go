@@ -45,7 +45,6 @@ func TestLoad(t *testing.T) {
           dotfiles: "/Users/ricky/.dotfiles"
     - name: work
       path: "/Users/ricky/gh"
-      overrideSrc: yes
       aliases:
           ghe: super-secret
       custom:

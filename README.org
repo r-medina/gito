@@ -125,7 +125,6 @@ where code should live) - find code and stay organized easier!
               dotfiles: "/Users/ricky/.dotfiles"
         - name: work
           path: "/Users/ricky/gh"
-          overrideSrc: yes
           aliases:
               ghe: super-secret
           custom:
