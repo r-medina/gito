@@ -59,9 +59,10 @@ func TestLoad(t *testing.T) {
 	got := config.Workspaces[0]
 	want := &Workspace{
 		Name:    "personal",
-		Path:    "~",
+		Path:    "/Users/ricky",
+		path:    []string{"/Users/ricky/src"},
 		Aliases: map[string]string{"g": "gito", "d": "dotfiles"},
-		Custom:  map[string]string{"dotfiles": "~/.dotfiles"},
+		Custom:  map[string]string{"dotfiles": "/Users/ricky/.dotfiles"},
 	}
 
 	assert := assert.New(t)
@@ -70,9 +71,10 @@ func TestLoad(t *testing.T) {
 	got = config.Workspaces[1]
 	want = &Workspace{
 		Name:    "work",
-		Path:    "~/gh",
+		Path:    "/Users/ricky/gh",
+		path:    []string{"/Users/ricky/gh/src"},
 		Aliases: map[string]string{"ghe": "super-secret"},
-		Custom:  map[string]string{"super-secret": "~/somewhereElse/theMoneyMaker"},
+		Custom:  map[string]string{"super-secret": "somewhereElse/theMoneyMaker"},
 	}
 	assert.Equal(want, got)
 }

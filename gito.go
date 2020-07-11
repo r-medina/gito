@@ -27,7 +27,7 @@ func (g *G) Get(repo string) error {
 		return err
 	}
 
-	if exists, err := doGitClone(repo, fullPath); exists {
+	if exists, err := gitCloneAt(repo, fullPath); exists {
 		return fmt.Errorf("something already exists at %q", fullPath)
 	} else if err != nil {
 		return err
@@ -36,7 +36,7 @@ func (g *G) Get(repo string) error {
 	return nil
 }
 
-func doGitClone(repo, fullPath string) (bool, error) {
+func gitCloneAt(repo, fullPath string) (bool, error) {
 	_, err := os.Stat(fullPath)
 	if !os.IsNotExist(err) {
 		return true, nil
@@ -89,16 +89,15 @@ func in(repo, dir, soFar string, depth int) (string, bool) {
 
 	// found it
 
-	_, err := os.Stat(filepath.Join(fullPath, ".git"))
-	isRepo := !os.IsNotExist(err)
+	dirIsRepo := isRepo(fullPath)
 
-	if repo == dir && isRepo {
+	if repo == dir && dirIsRepo {
 		return fullPath, true
 	}
 
 	// in case repo is a partial name (ie r-medina/gito)
 	f, err := os.Stat(fullPath)
-	if err == nil && isRepo {
+	if err == nil && dirIsRepo {
 		return fullPath, f.IsDir() // make sure we're not getting a file
 	}
 
@@ -124,6 +123,12 @@ func in(repo, dir, soFar string, depth int) (string, bool) {
 	}
 
 	return "", false
+}
+
+// isRepo tests for the existence of a .git directory at dir.
+func isRepo(dir string) bool {
+	_, err := os.Stat(filepath.Join(dir, ".git"))
+	return !os.IsNotExist(err)
 }
 
 func (g *G) URL(repo string) (string, error) {
