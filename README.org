@@ -52,7 +52,7 @@ where code should live) - find code and stay organized easier!
   can set =r-medina/gito= and =gito= to =<path>= so that both work!
 
 
-* make alias for repo
+* Mmake alias for repo
 
   #+begin_src shell
     gito alias g github.com/mvdan/garble
@@ -130,6 +130,31 @@ where code should live) - find code and stay organized easier!
           custom:
               super-secret: "somewhereElse/theMoneyMaker
   #+end_src
+
+
+* Installation
+
+  #+begin_src shell
+    go install -u github.com/r-medina/gito
+  #+end_src
+
+* Useful aliases
+
+  Add the following to your shell:
+  #+begin_src shell
+    whence gito > /dev/null || return
+
+    gicd() {
+	cd $(gito where $1)
+    }
+
+    gpen() {
+	open $(gito url $1)
+    }
+  #+end_src
+
+  This makes going into your source code directories really easy =gcd
+  gito= as well as opening the repository in a web browser.
 
 
 * Caveats
