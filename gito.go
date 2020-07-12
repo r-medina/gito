@@ -168,6 +168,11 @@ func (g *G) URL(repo string) (string, error) {
 }
 
 func (g *G) Alias(from, to string) error {
+	_, err := g.Where(to)
+	if err != nil {
+		return err
+	}
+
 	aliases := g.config.active.Aliases
 	// no nil check because config load does that
 	g.config.active.Aliases = aliases
@@ -178,6 +183,10 @@ func (g *G) Alias(from, to string) error {
 }
 
 func (g *G) Set(name, loc string) error {
+	if !isRepo(loc) {
+		return fmt.Errorf("no repo @ %q", loc)
+	}
+
 	custom := g.config.active.Custom
 	custom[name] = loc
 

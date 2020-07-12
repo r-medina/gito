@@ -57,10 +57,8 @@ var cmds = map[string]func(_ *gito.G, args ...string){
 			os.Exit(1)
 		}
 
-		if err := g.Get(args[0]); err != nil {
-			fmt.Printf("%v\n", err)
-			os.Exit(1)
-		}
+		repo := args[0]
+		exitIfErr(g.Get(repo), "getting %q", repo)
 	},
 
 	"where": func(g *gito.G, args ...string) {
@@ -69,11 +67,9 @@ var cmds = map[string]func(_ *gito.G, args ...string){
 			os.Exit(1)
 		}
 
-		fullPath, err := g.Where(args[0])
-		if err != nil {
-			fmt.Println(err)
-			os.Exit(1)
-		}
+		repo := args[0]
+		fullPath, err := g.Where(repo)
+		exitIfErr(err, "finding %q", repo)
 
 		fmt.Println(fullPath)
 	},
@@ -89,10 +85,7 @@ var cmds = map[string]func(_ *gito.G, args ...string){
 		}
 
 		url, err := g.URL(path)
-		if err != nil {
-			fmt.Printf("%v\n", err)
-			os.Exit(1)
-		}
+		exitIfErr(err, "getting URL for %q", path)
 
 		fmt.Println(url)
 	},
@@ -103,10 +96,8 @@ var cmds = map[string]func(_ *gito.G, args ...string){
 			os.Exit(1)
 		}
 
-		if err := g.Alias(args[0], args[1]); err != nil {
-			fmt.Printf("%v\n", err)
-			os.Exit(1)
-		}
+		from, to := args[0], args[1]
+		exitIfErr(g.Alias(from, to), "setting Alias %q -> %q", from, to)
 	},
 
 	"set": func(g *gito.G, args ...string) {
@@ -115,10 +106,8 @@ var cmds = map[string]func(_ *gito.G, args ...string){
 			os.Exit(1)
 		}
 
-		if err := g.Set(args[0], args[1]); err != nil {
-			fmt.Printf("%v\n", err)
-			os.Exit(1)
-		}
+		name, loc := args[0], args[1]
+		exitIfErr(g.Set(name, loc), "setting %q location to %q", name, loc)
 	},
 }
 
@@ -130,32 +119,35 @@ func main() {
 
 	newConfig := false
 	home, err := os.UserHomeDir()
-	fname := filepath.Join(home, ".config/gito/gito.yaml")
-	f, err := os.OpenFile(fname, os.O_SYNC|os.O_RDWR, 0622)
+	exitIfErr(err, "finding home directory")
+	configName := filepath.Join(home, ".config/gito/gito.yaml")
+	f, err := os.OpenFile(configName, os.O_SYNC|os.O_RDWR, 0622)
 	if os.IsNotExist(err) {
 		newConfig = true
-		if err = os.MkdirAll(filepath.Join(home, "/.config/gito"), 0755); err != nil {
-			fmt.Fprintf(os.Stderr, "error making config dir: %v", err)
-			os.Exit(1)
-		}
+		err = os.MkdirAll(filepath.Join(home, "/.config/gito"), 0755)
+		exitIfErr(err, "making config dir")
 
-		f, err = os.OpenFile(fname, os.O_SYNC|os.O_WRONLY|os.O_CREATE, 0622)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "error making config file: %v", err)
-			os.Exit(1)
-		}
-	} else if err != nil {
-		fmt.Fprintf(os.Stderr, "error opening config: %v", err)
-		os.Exit(1)
+		f, err = os.OpenFile(configName, os.O_SYNC|os.O_WRONLY|os.O_CREATE, 0622)
+		exitIfErr(err, "making config file")
+	} else {
+		exitIfErr(err, "opening config file %q", configName)
 	}
 
 	config, err := gito.LoadConfig(f, newConfig, workspace)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error loading config: %v\n", err)
-		os.Exit(1)
-	}
+	exitIfErr(err, "loading config @ %q", configName)
 
 	g := gito.New(config)
 	defer f.Close()
 	cmds[os.Args[1]](g, os.Args[2:]...)
+}
+
+func exitIfErr(err error, format string, args ...interface{}) {
+	if err == nil {
+		return
+	}
+
+	fmt.Fprintf(os.Stderr, format, args...)
+	fmt.Fprintf(os.Stderr, ": %v\n", err)
+	os.Exit(1)
+
 }
