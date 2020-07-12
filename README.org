@@ -52,7 +52,7 @@ where code should live) - find code and stay organized easier!
   can set =r-medina/gito= and =gito= to =<path>= so that both work!
 
 
-* Mmake alias for repo
+* Make alias for repo
 
   #+begin_src shell
     gito alias g github.com/mvdan/garble
