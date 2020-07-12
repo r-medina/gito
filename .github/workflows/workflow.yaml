@@ -7,13 +7,12 @@ jobs:
     steps:
     - uses: actions/checkout@master
 
-    - name: golangci-lint
-      uses: golangci/golangci-lint-action@v1
-      with:
-        version: v1.26
-
     - name: tests
       uses: cedrickring/golang-action@1.5.2
       with:
         args: make test
           
+    - name: golangci-lint
+      uses: golangci/golangci-lint-action@v1
+      with:
+        version: v1.26
