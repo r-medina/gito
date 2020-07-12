@@ -112,8 +112,11 @@ func TestAll(t *testing.T) {
 	// test set
 	//
 
-	err = g.Set("this", dir)
+	want := filepath.Join(dir, "dotfiles")
+	_, err = gitCloneAt("github.com/r-medina/dotfiles", want)
+
+	err = g.Set("this", want)
 	assert.NoError(err, "calling set")
 	where, err = g.Where("this")
-	assert.Equal(dir, where, "calling where on 'this' after setting")
+	assert.Equal(want, where, "calling where on 'this' after setting")
 }
