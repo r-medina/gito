@@ -1,8 +1,8 @@
 #+TITLE: gito
 #+PROPERTY: header-args :eval no
 
-Tool for managing source code more like =go get= (ie with opinions on
-where code should live) - find code and stay organized easier!
+Tool for managing where your source code lives! Find code and stay
+organized easier.
 
 * Download code
 
