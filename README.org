@@ -7,7 +7,7 @@ organized easier.
 * Download code
 
   #+begin_src text :noeval
-    gito get github.com/r-medina/gito # defults to GOPATH[0]/src/github.com/... or $HOME/src/...
+    gito get github.com/r-medina/gito # defaults to GOPATH[0]/src/github.com/... or $HOME/src/...
   #+end_src
 
   the =get= command needs a full(ish) name/url - from then on you can
