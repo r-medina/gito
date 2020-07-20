@@ -114,6 +114,7 @@ func TestAll(t *testing.T) {
 
 	want := filepath.Join(dir, "dotfiles")
 	_, err = gitCloneAt("github.com/r-medina/dotfiles", want)
+	assert.NoError(err, "cloning dotfiles")
 
 	err = g.Set("this", want)
 	assert.NoError(err, "calling set")
