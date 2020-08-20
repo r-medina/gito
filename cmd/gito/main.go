@@ -12,10 +12,9 @@ import (
 var workspace string
 
 func init() {
-	flag.StringVar(&workspace, "workspace", "", "which workspace to use - setup ~/.config/gito/gito.json")
-	if workspace == "" {
-		flag.StringVar(&workspace, "w", "", "which workspace to use - setup ~/.config/gito/gito.json")
-	}
+	flag.StringVar(&workspace, "w", "", "which workspace to use - setup ~/.config/gito/gito.json")
+
+	flag.Parse()
 }
 
 func usage() {
@@ -26,8 +25,7 @@ Manage code intelligently.
 See http://github.com/r-medina/gito for documentation.
 
 Flags:
-  --workspace=WORKSPACE which workspace to use (defaults to first in config)
-    -w
+  -w WORKSPACE which workspace to use (defaults to first in config)
 
 Commands:
   help
@@ -112,7 +110,7 @@ var cmds = map[string]func(_ *gito.G, args ...string){
 }
 
 func main() {
-	if len(os.Args) < 3 {
+	if len(flag.Args()) < 2 {
 		usage()
 		os.Exit(1)
 	}
@@ -138,7 +136,9 @@ func main() {
 
 	g := gito.New(config)
 	defer f.Close()
-	cmds[os.Args[1]](g, os.Args[2:]...)
+
+	cmd := cmds[flag.Args()[0]]
+	cmd(g, flag.Args()[1:]...)
 }
 
 func exitIfErr(err error, format string, args ...interface{}) {

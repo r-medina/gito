@@ -99,6 +99,13 @@ func LoadConfig(f File, newConfig bool, workspace string) (*Config, error) {
 		config.Workspaces = []*Workspace{ws}
 		config.active = config.Workspaces[0]
 
+		if ws.Aliases == nil {
+			ws.Aliases = make(map[string]string)
+		}
+		if ws.Custom == nil {
+			ws.Custom = make(map[string]string)
+		}
+
 		encoder := yaml.NewEncoder(f)
 		if err := encoder.Encode(config); err != nil {
 			return nil, err
@@ -133,6 +140,10 @@ func LoadConfig(f File, newConfig bool, workspace string) (*Config, error) {
 		if w.Custom == nil {
 			w.Custom = make(map[string]string)
 		}
+	}
+
+	if config.active == nil {
+		return nil, fmt.Errorf("no workspace %q", workspace)
 	}
 
 	return config, nil

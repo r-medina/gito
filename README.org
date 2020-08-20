@@ -85,8 +85,7 @@ organized easier.
     See http://github.com/r-medina/gito for documentation.
 
     Flags:
-      --workspace=WORKSPACE which workspace to use (defaults to first in config)
-	-w
+      -w WORKSPACE which workspace to use (defaults to first in config)
 
     Commands:
       help
@@ -137,6 +136,7 @@ organized easier.
   #+begin_src shell
     go install -u github.com/r-medina/gito
   #+end_src
+
 
 * Useful aliases
 
