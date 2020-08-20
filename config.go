@@ -76,10 +76,6 @@ type File interface {
 func LoadConfig(f File, newConfig bool, workspace string) (*Config, error) {
 	config := &Config{f: f}
 
-	if workspace == "" {
-		workspace = "default"
-	}
-
 	if newConfig {
 		path := os.Getenv("GOPATH")
 		if path == "" {
@@ -134,6 +130,7 @@ func LoadConfig(f File, newConfig bool, workspace string) (*Config, error) {
 		if w.Name == workspace {
 			config.active = w
 		}
+
 		if w.Aliases == nil {
 			w.Aliases = make(map[string]string)
 		}
@@ -143,7 +140,11 @@ func LoadConfig(f File, newConfig bool, workspace string) (*Config, error) {
 	}
 
 	if config.active == nil {
-		return nil, fmt.Errorf("no workspace %q", workspace)
+		if workspace != "" {
+			return nil, fmt.Errorf("no workspace %q", workspace)
+		}
+
+		config.active = config.Workspaces[0]
 	}
 
 	return config, nil
