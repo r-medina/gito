@@ -4,6 +4,10 @@
 Tool for managing where your source code lives! Find code and stay
 organized easier.
 
+Your configurable source path will have directories namespaced by
+organization and repository (=$HOME/src/github.com/r-medina/gito=, for
+example).
+
 * Download code
 
   #+begin_src text :noeval
@@ -20,7 +24,6 @@ organized easier.
   #+begin_src shell
     gito where r-medina/gito # $HOME/go/src/github.com/r-medina/gito
   #+end_src
-
 
   Can also find code with just repo name
   #+begin_src shell
