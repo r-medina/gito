@@ -48,7 +48,7 @@ example).
 
   #+begin_src shell
     gito set r-medina/gito <path> # saves the location information to path
-    gito get r-medina/gito        # <path>
+    gito where r-medina/gito        # <path>
   #+end_src
 
   when a repo's location is set, only that name can be used, but you
