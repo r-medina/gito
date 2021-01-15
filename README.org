@@ -1,24 +1,43 @@
 #+TITLE: gito
 #+PROPERTY: header-args :eval no
 
-Tool for managing where your source code lives! Find code and stay
-organized easier.
+Gito manages where your source code lives!
 
-Your configurable source path will have directories namespaced by
-organization and repository (=$HOME/src/github.com/r-medina/gito=, for
-example).
+This very lightweight solution lets you stay organized and find your
+code without ever thinking about it.
+
+Inspired by =go get=, your configurable source path will have
+directories namespaced by organization and repository
+(=$HOME/src/github.com/r-medina/gito=, for example).
+
+#+begin_src shell
+  # download a new project
+  gito get github.com/r-medina/dotfiles
+
+  # set an alias
+  gito alias dot r-medina/dotfiles
+
+  # configure a few aliases in your terminal for quick cd/open
+
+  # takes you to dotfiles
+  gicd dot
+
+  # open the repository in a browser
+  gpen .
+#+end_src
+
+/full documentation below/
 
 * Download code
 
-  #+begin_src text :noeval
+  #+begin_src shell :noeval
     # this defaults to GOPATH[0]/src/github.com/... or $HOME/src/...
 
     gito get github.com/r-medina/gito
   #+end_src
 
-  the =get= command needs a full(ish) name/url - from then on you can
-  refer to repos by a subset of their names (eg "r-medina/gito" or
-  "gito").
+  the =get= command does need the full GitHub path to a repo, but from
+  here on you can use any subset of the repo name (eg =gito=)
 
 
 * Find out where repo is
@@ -36,6 +55,8 @@ example).
   #+begin_src shell
     cd $(gito where gito)
   #+end_src
+
+  /it's helpful to set an alias in your shell to that cd command/
 
 
 * Find repo online
@@ -119,20 +140,20 @@ example).
   config file.
 
   #+begin_src yaml
-      workspaces:
-	- name: personal
-	  path: "/Users/ricky"
-	  aliases:
-	    g: gito
-	    d: dotfiles
-	    custom:
-	      dotfiles: "/Users/ricky/.dotfiles"
-	      - name: work
-		path: "/Users/ricky/gh"
-		aliases:
-		  ghe: super-secret
-		  custom:
-		    super-secret: "somewhereElse/theMoneyMaker
+    workspaces:
+      - name: personal
+        path: "/Users/ricky"
+        aliases:
+          g: gito
+          d: dotfiles
+        custom:
+          dotfiles: "/Users/ricky/.dotfiles"
+      - name: work
+        path: "/Users/ricky/gh"
+        aliases:
+          ghe: super-secret
+        custom:
+          super-secret: "somewhereElse/theMoneyMaker
   #+end_src
 
 
