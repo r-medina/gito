@@ -28,6 +28,13 @@ directories namespaced by organization and repository
 
 /full documentation below/
 
+* Installation
+
+  #+begin_src shell
+    go install -u github.com/r-medina/gito
+  #+end_src
+
+
 * Download code
 
   #+begin_src shell :noeval
@@ -154,13 +161,6 @@ directories namespaced by organization and repository
           ghe: super-secret
         custom:
           super-secret: "somewhereElse/theMoneyMaker
-  #+end_src
-
-
-* Installation
-
-  #+begin_src shell
-    go install -u github.com/r-medina/gito
   #+end_src
 
 
