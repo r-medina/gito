@@ -68,18 +68,23 @@ func (g *G) Where(repo string) (string, error) {
 		return path, nil
 	}
 
+	return g.where(repo, true)
+}
+
+func (g *G) where(maybePath string, checkIsRepo bool) (string, error) {
 	for _, dir := range g.config.active.path {
-		fullPath, ok := in(repo, filepath.Join(dir), "", 0)
+		fullPath, ok := in(maybePath, filepath.Join(dir), "", checkIsRepo, 0)
 		if ok {
 			return fullPath, nil
 		}
 	}
 
-	return "", fmt.Errorf("%q not found", repo)
+	return "", fmt.Errorf("%q not found", maybePath)
+
 }
 
 // in is a recursive function that checks for repo inside of dir.
-func in(repo, dir, soFar string, depth int) (string, bool) {
+func in(repo, dir, soFar string, checkIsRepo bool, depth int) (string, bool) {
 	// don't check git directories
 	if dir == ".git" {
 		return "", false
@@ -88,8 +93,10 @@ func in(repo, dir, soFar string, depth int) (string, bool) {
 	fullPath := filepath.Join(soFar, dir, repo)
 
 	// found it
-
-	dirIsRepo := isRepo(fullPath)
+	dirIsRepo := true
+	if checkIsRepo {
+		dirIsRepo = isRepo(fullPath)
+	}
 
 	if repo == dir && dirIsRepo {
 		return fullPath, true
@@ -116,7 +123,7 @@ func in(repo, dir, soFar string, depth int) (string, bool) {
 			continue
 		}
 
-		fullPath, ok := in(repo, file.Name(), filepath.Join(soFar, dir), depth+1)
+		fullPath, ok := in(repo, file.Name(), filepath.Join(soFar, dir), checkIsRepo, depth+1)
 		if ok {
 			return fullPath, true
 		}
@@ -191,4 +198,14 @@ func (g *G) Set(name, loc string) error {
 	custom[name] = loc
 
 	return g.config.Sync()
+}
+
+func (g *G) SetSelf(self string) error {
+	g.config.active.Self = self
+
+	return g.config.Sync()
+}
+
+func (g *G) Self() (string, error) {
+	return g.where(g.config.active.Self, false)
 }

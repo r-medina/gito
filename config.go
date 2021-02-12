@@ -18,6 +18,7 @@ type Config struct {
 type Workspace struct {
 	Name    string            `yaml:"name"`
 	Path    string            `yaml:"path,omitempty"`
+	Self    string            `yaml:"self,omitempty"`
 	Aliases map[string]string `yaml:"aliases,omitempty"`
 	Custom  map[string]string `yaml:"custom,omitempty"`
 

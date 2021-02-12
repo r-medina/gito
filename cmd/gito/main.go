@@ -45,6 +45,12 @@ Commands:
 
   set <alias> <location>
     for code living outside your configured path, tell gito where to find it
+
+  set-self <location>
+    configuring gito to use a default folder for your code
+
+  self
+    get location of self in config (default location to put your code)
 `)
 }
 
@@ -107,10 +113,32 @@ var cmds = map[string]func(_ *gito.G, args ...string){
 		name, loc := args[0], args[1]
 		exitIfErr(g.Set(name, loc), "setting %q location to %q", name, loc)
 	},
+
+	"set-self": func(g *gito.G, args ...string) {
+		if len(args) != 1 {
+			usage()
+			os.Exit(1)
+		}
+
+		self := args[0]
+		exitIfErr(g.SetSelf(self), "setting self to %s", self)
+	},
+
+	"self": func(g *gito.G, args ...string) {
+		if len(args) != 0 {
+			usage()
+			os.Exit(1)
+		}
+
+		self, err := g.Self()
+		exitIfErr(err, "getting self")
+
+		fmt.Println(self)
+	},
 }
 
 func main() {
-	if len(flag.Args()) < 2 {
+	if len(flag.Args()) < 1 {
 		usage()
 		os.Exit(1)
 	}
@@ -138,6 +166,10 @@ func main() {
 	defer f.Close()
 
 	cmd := cmds[flag.Args()[0]]
+	if cmd == nil {
+		usage()
+		os.Exit(1)
+	}
 	cmd(g, flag.Args()[1:]...)
 }
 
