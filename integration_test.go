@@ -120,4 +120,17 @@ func TestAll(t *testing.T) {
 	assert.NoError(err, "calling set")
 	where, err = g.Where("this")
 	assert.Equal(want, where, "calling where on 'this' after setting")
+
+	//
+	// test self
+	//
+
+	got, err := g.Self()
+	assert.NoError(err, "getting self")
+	assert.Equal("", got)
+	assert.NoError(g.SetSelf("github.com/r-medina"))
+
+	got, err = g.Self()
+	assert.NoError(err, "getting self")
+	assert.Equal(filepath.Join(dir, "src", "github.com/r-medina"), got)
 }

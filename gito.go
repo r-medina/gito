@@ -207,5 +207,10 @@ func (g *G) SetSelf(self string) error {
 }
 
 func (g *G) Self() (string, error) {
-	return g.where(g.config.active.Self, false)
+	self := g.config.active.Self
+	if self == "" {
+		return "", nil
+	}
+
+	return g.where(self, false)
 }
