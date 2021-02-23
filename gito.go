@@ -181,9 +181,6 @@ func (g *G) Alias(from, to string) error {
 	}
 
 	aliases := g.config.active.Aliases
-	// no nil check because config load does that
-	g.config.active.Aliases = aliases
-
 	aliases[from] = to
 
 	return g.config.Sync()
@@ -201,6 +198,11 @@ func (g *G) Set(name, loc string) error {
 }
 
 func (g *G) SetSelf(self string) error {
+	_, err := g.where(self, false)
+	if err != nil {
+		return err
+	}
+
 	g.config.active.Self = self
 
 	return g.config.Sync()

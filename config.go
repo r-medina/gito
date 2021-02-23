@@ -68,22 +68,36 @@ func (c *Config) Sync() error {
 	return c.f.Sync()
 }
 
+func (c *Config) Close() error {
+	return c.f.Close()
+}
+
 type File interface {
 	io.ReadWriteSeeker
 	Sync() error
 	Truncate(int64) error
+	Close() error
 }
 
-func LoadConfig(f File, newConfig bool, workspace string) (*Config, error) {
+func LoadConfig(workspace string) (*Config, error) {
+	f, newConfig, err := initConfig()
+	if err != nil {
+		return nil, err
+	}
+
 	config := &Config{f: f}
 
+	return config, loadConfig(f, config, newConfig, workspace)
+}
+
+func loadConfig(f File, config *Config, newConfig bool, workspace string) error {
 	if newConfig {
 		path := os.Getenv("GOPATH")
 		if path == "" {
 			var err error
 			path, err = os.UserHomeDir()
 			if err != nil {
-				return nil, fmt.Errorf("making config file: %v", err)
+				return err
 			}
 		}
 
@@ -105,15 +119,15 @@ func LoadConfig(f File, newConfig bool, workspace string) (*Config, error) {
 
 		encoder := yaml.NewEncoder(f)
 		if err := encoder.Encode(config); err != nil {
-			return nil, err
+			return err
 		}
 
-		return config, f.Sync()
+		return f.Sync()
 	}
 
 	decoder := yaml.NewDecoder(f)
 	if err := decoder.Decode(config); err != nil {
-		return nil, fmt.Errorf("error decoding yaml config: %w", err)
+		return err
 	}
 
 	if len(config.Workspaces) == 0 {
@@ -142,11 +156,44 @@ func LoadConfig(f File, newConfig bool, workspace string) (*Config, error) {
 
 	if config.active == nil {
 		if workspace != "" {
-			return nil, fmt.Errorf("no workspace %q", workspace)
+			return fmt.Errorf("no workspace %q", workspace)
 		}
 
 		config.active = config.Workspaces[0]
 	}
 
-	return config, nil
+	return nil
+}
+
+func initConfig() (File, bool, error) {
+	newConfig := false
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return nil, newConfig, err
+	}
+
+	configDir := filepath.Join(home, "/.config/gito")
+	configFile := filepath.Join(configDir, "gito.yaml")
+
+	f, err := os.OpenFile(configFile, os.O_SYNC|os.O_RDWR, 0622)
+	if os.IsNotExist(err) {
+		newConfig = true
+		err = os.MkdirAll(configDir, 0755)
+		if err != nil {
+			f.Close()
+			return nil, newConfig, err
+		}
+
+		f, err = os.OpenFile(configFile, os.O_SYNC|os.O_WRONLY|os.O_CREATE, 0622)
+		if err != nil {
+			f.Close()
+			return nil, newConfig, err
+
+		}
+	} else if err != nil {
+		f.Close()
+		return nil, newConfig, err
+	}
+
+	return f, false, nil
 }

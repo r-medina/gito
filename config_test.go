@@ -34,6 +34,10 @@ func (f *mockConfigFile) Seek(offset int64, whence int) (int64, error) {
 	return 0, nil
 }
 
+func (f *mockConfigFile) Close() error {
+	return nil
+}
+
 func TestLoad(t *testing.T) {
 	r := `workspaces:
     - name: personal
@@ -50,7 +54,9 @@ func TestLoad(t *testing.T) {
       custom:
           super-secret: "somewhereElse/theMoneyMaker"`
 
-	config, err := LoadConfig(newMockConfigFile(r), false, "")
+	f := newMockConfigFile(r)
+	config := &Config{f: f}
+	err := loadConfig(f, config, false, "")
 	if err != nil {
 		t.Fatalf("unexpected error loading config: %v", err)
 	}

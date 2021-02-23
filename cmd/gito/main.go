@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/r-medina/gito"
 )
@@ -143,27 +142,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	newConfig := false
-	home, err := os.UserHomeDir()
-	exitIfErr(err, "finding home directory")
-	configName := filepath.Join(home, ".config/gito/gito.yaml")
-	f, err := os.OpenFile(configName, os.O_SYNC|os.O_RDWR, 0622)
-	if os.IsNotExist(err) {
-		newConfig = true
-		err = os.MkdirAll(filepath.Join(home, "/.config/gito"), 0755)
-		exitIfErr(err, "making config dir")
-
-		f, err = os.OpenFile(configName, os.O_SYNC|os.O_WRONLY|os.O_CREATE, 0622)
-		exitIfErr(err, "making config file")
-	} else {
-		exitIfErr(err, "opening config file %q", configName)
-	}
-
-	config, err := gito.LoadConfig(f, newConfig, workspace)
-	exitIfErr(err, "loading config @ %q", configName)
+	config, err := gito.LoadConfig(workspace)
+	exitIfErr(err, "loading config")
+	defer config.Close()
 
 	g := gito.New(config)
-	defer f.Close()
 
 	cmd := cmds[flag.Args()[0]]
 	if cmd == nil {
@@ -181,5 +164,4 @@ func exitIfErr(err error, format string, args ...interface{}) {
 	fmt.Fprintf(os.Stderr, format, args...)
 	fmt.Fprintf(os.Stderr, ": %v\n", err)
 	os.Exit(1)
-
 }
