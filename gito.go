@@ -44,18 +44,18 @@ func gitCloneAt(repo, fullPath string) (bool, error) {
 
 	gitRepo := fmt.Sprintf("https://%s.git", repo) // simpler than ssh
 	cmd := exec.Command("git", "clone", "--", gitRepo, fullPath)
-	buf := &bytes.Buffer{}
-	cmd.Stderr = buf
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
 	if err := cmd.Run(); err != nil {
-		return false, fmt.Errorf("error cloning repo: %v, stderr: %q", err, buf.String())
+		return false, fmt.Errorf("gito: error cloning repo: %v", err)
 	}
 
 	cmd = exec.Command("git", "submodule", "update", "--init", "--recursive")
-	buf.Reset()
-	cmd.Stderr = buf
+	cmd.Stderr = os.Stderr
+	cmd.Stdout = os.Stdout
 	cmd.Dir = fullPath
 	if err := cmd.Run(); err != nil {
-		return false, fmt.Errorf("error updating submodules: %v, stderr: %s", err, buf.String())
+		return false, fmt.Errorf("gito: error updating submodules: %v", err)
 	}
 
 	return false, nil
