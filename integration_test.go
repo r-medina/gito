@@ -1,5 +1,4 @@
 //go:build integration
-// +build integration
 
 package gito
 
@@ -124,7 +123,7 @@ func TestAll(t *testing.T) {
 
 	t.Run("set", func(t *testing.T) {
 		want := filepath.Join(dir, "dotfiles")
-		_, err = gitCloneAt("github.com/r-medina/dotfiles", want)
+		_, err = gitCloneAt("github.com/r-medina/interbtc", want)
 		assert.NoError(err, "cloning dotfiles")
 
 		err = g.Set("this", want)
