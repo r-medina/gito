@@ -1,4 +1,5 @@
-//+build integration
+//go:build integration
+// +build integration
 
 package gito
 
@@ -44,93 +45,107 @@ func TestAll(t *testing.T) {
 	// test get
 	//
 
-	err = g.Get("github.com/r-medina/gito")
-	assert.NoError(err, "getting 'r-medina/gito'")
+	t.Run("get", func(t *testing.T) {
+		err = g.Get("github.com/r-medina/gito")
+		assert.NoError(err, "getting 'r-medina/gito'")
+	})
 
 	//
 	// test where
 	//
 
-	// with full name of repo
+	var where string
+	t.Run("get", func(t *testing.T) {
+		// with full name of repo
 
-	where, err := g.Where("github.com/r-medina/gito")
-	assert.NoError(err, "where 'github.com/r-medina/gito")
-	assert.Equal(filepath.Join(dir, "src", "github.com/r-medina/gito"),
-		where,
-		"r-medina/gito not in expected location")
+		where, err = g.Where("github.com/r-medina/gito")
+		assert.NoError(err, "where 'github.com/r-medina/gito")
+		assert.Equal(filepath.Join(dir, "src", "github.com/r-medina/gito"),
+			where,
+			"r-medina/gito not in expected location")
 
-	// dropping github.com
+		// dropping github.com
 
-	where, err = g.Where("r-medina/gito")
-	assert.NoError(err, "where 'r-medina/gito")
-	assert.Equal(filepath.Join(dir, "src", "github.com/r-medina/gito"),
-		where,
-		"r-medina/gito not in expected location")
+		where, err = g.Where("r-medina/gito")
+		assert.NoError(err, "where 'r-medina/gito")
+		assert.Equal(filepath.Join(dir, "src", "github.com/r-medina/gito"),
+			where,
+			"r-medina/gito not in expected location")
 
-	// dropping r-medina
+		// dropping r-medina
 
-	where, err = g.Where("gito")
-	assert.NoError(err, "where 'gito")
-	assert.Equal(filepath.Join(dir, "src", "github.com/r-medina/gito"),
-		where,
-		"gito not in expected location")
+		where, err = g.Where("gito")
+		assert.NoError(err, "where 'gito")
+		assert.Equal(filepath.Join(dir, "src", "github.com/r-medina/gito"),
+			where,
+			"gito not in expected location")
 
-	// make sure get downloaded a repo
+		// make sure get downloaded a repo
 
-	assert.True(isRepo(where), "%q is not a repo", where)
+		assert.True(isRepo(where), "%q is not a repo", where)
+	})
 
 	//
 	// test url
 	//
 
-	url, err := g.URL("gito")
-	assert.NoError(err, "getting 'gito' url")
-	assert.Equal("https://github.com/r-medina/gito", url, "url for 'gito'")
+	t.Run("url", func(t *testing.T) {
+		url, err := g.URL("gito")
+		assert.NoError(err, "getting 'gito' url")
+		assert.Equal("https://github.com/r-medina/gito", url, "url for 'gito'")
+	})
 
 	//
 	// test alias
 	//
 
-	err = g.Alias("g", "r-medina/gito")
-	assert.NoError(err, "making alias g for r-medina/gito")
+	t.Run("alias", func(t *testing.T) {
+		err = g.Alias("g", "r-medina/gito")
+		assert.NoError(err, "making alias g for r-medina/gito")
 
-	alias, ok := config.active.Aliases["g"]
-	assert.True(ok, "getting alias 'g' from workspace (using underlying map)")
-	assert.Equal("r-medina/gito", alias, "alias value for 'g' (in underlying map)")
-	alias, ok = config.active.Alias("g")
-	assert.True(ok, "getting alias 'g' from workspace (using method Alias)")
-	assert.Equal("r-medina/gito", alias, "alias value for 'g' (using method Alias)")
+		alias, ok := config.active.Aliases["g"]
+		assert.True(ok, "getting alias 'g' from workspace (using underlying map)")
+		assert.Equal("r-medina/gito", alias, "alias value for 'g' (in underlying map)")
+		alias, ok = config.active.Alias("g")
+		assert.True(ok, "getting alias 'g' from workspace (using method Alias)")
+		assert.Equal("r-medina/gito", alias, "alias value for 'g' (using method Alias)")
 
-	// make sure where still works
-	where, err = g.Where("g")
-	assert.NoError(err, "where 'gito")
-	assert.Equal(filepath.Join(dir, "src", "github.com/r-medina/gito"),
-		where,
-		"'g' not in expected location")
+		// make sure where still works
+		where, err = g.Where("g")
+		assert.NoError(err, "where 'gito")
+		assert.Equal(filepath.Join(dir, "src", "github.com/r-medina/gito"),
+			where,
+			"'g' not in expected location")
+	})
 
 	//
 	// test set
 	//
 
-	want := filepath.Join(dir, "dotfiles")
-	_, err = gitCloneAt("github.com/r-medina/dotfiles", want)
-	assert.NoError(err, "cloning dotfiles")
+	t.Run("set", func(t *testing.T) {
+		want := filepath.Join(dir, "dotfiles")
+		_, err = gitCloneAt("github.com/r-medina/dotfiles", want)
+		assert.NoError(err, "cloning dotfiles")
 
-	err = g.Set("this", want)
-	assert.NoError(err, "calling set")
-	where, err = g.Where("this")
-	assert.Equal(want, where, "calling where on 'this' after setting")
+		err = g.Set("this", want)
+		assert.NoError(err, "calling set")
+		where, err = g.Where("this")
+		assert.Equal(want, where, "calling where on 'this' after setting")
+	})
 
 	//
 	// test self
 	//
 
-	got, err := g.Self()
-	assert.NoError(err, "getting self")
-	assert.Equal("", got)
-	assert.NoError(g.SetSelf("github.com/r-medina"))
+	t.Run("self", func(t *testing.T) {
+		got, err := g.Self()
+		assert.NoError(err, "getting self")
+		assert.Equal("", got)
+		assert.NoError(g.SetSelf("github.com/r-medina"))
 
-	got, err = g.Self()
-	assert.NoError(err, "getting self")
-	assert.Equal(filepath.Join(dir, "src", "github.com/r-medina"), got)
+		got, err = g.Self()
+		assert.NoError(err, "getting self")
+		assert.Equal(filepath.Join(dir, "src", "github.com/r-medina"), got)
+
+	})
 }
