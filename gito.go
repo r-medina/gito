@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"strings"
 )
@@ -41,6 +43,12 @@ func gitCloneAt(repo, fullPath string) (bool, error) {
 	if !os.IsNotExist(err) {
 		return true, nil
 	}
+
+	parsed, err := url.Parse(repo)
+	if err != nil {
+		return false, fmt.Errorf("gito: error parsing repo URL: %v", err)
+	}
+	repo = path.Join(parsed.Host, parsed.Path)
 
 	gitRepo := fmt.Sprintf("https://%s.git", repo) // simpler than ssh
 	cmd := exec.Command("git", "clone", "--", gitRepo, fullPath)
