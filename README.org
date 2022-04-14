@@ -49,6 +49,8 @@ directories namespaced by organization and repository
   the =get= command does need the full GitHub path to a repo, but from
   here on you can use any subset of the repo name (eg =gito=)
 
+  You can include the entire github url, eg =https://github.com/r-medina/gito=
+
 
 * Find out where repo is
 
