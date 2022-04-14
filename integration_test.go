@@ -47,6 +47,10 @@ func TestAll(t *testing.T) {
 	t.Run("get", func(t *testing.T) {
 		err = g.Get("github.com/r-medina/gito")
 		assert.NoError(err, "getting 'r-medina/gito'")
+
+		// if this ever fails check to see if i've deleted the repo
+		err = g.Get("https://github.com/r-medina/go.lang")
+		assert.NoError(err, "getting 'https://github.com/r-medina/go.lang'")
 	})
 
 	//
