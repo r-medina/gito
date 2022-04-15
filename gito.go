@@ -21,10 +21,16 @@ func New(config *Config) *G {
 }
 
 func (g *G) Get(repo string) error {
+	parsed, err := url.Parse(repo)
+	if err != nil {
+		return fmt.Errorf("gito: error parsing repo URL: %v", err)
+	}
+	repo = path.Join(parsed.Host, parsed.Path)
+
 	// where repo will live in the PATH
 	fullPath := filepath.Join(g.config.active.path[0], repo)
 
-	err := os.MkdirAll(filepath.Dir(fullPath), 0755)
+	err = os.MkdirAll(filepath.Dir(fullPath), 0755)
 	if err != nil {
 		return err
 	}
@@ -43,12 +49,6 @@ func gitCloneAt(repo, fullPath string) (bool, error) {
 	if !os.IsNotExist(err) {
 		return true, nil
 	}
-
-	parsed, err := url.Parse(repo)
-	if err != nil {
-		return false, fmt.Errorf("gito: error parsing repo URL: %v", err)
-	}
-	repo = path.Join(parsed.Host, parsed.Path)
 
 	gitRepo := fmt.Sprintf("https://%s.git", repo) // simpler than ssh
 	cmd := exec.Command("git", "clone", "--", gitRepo, fullPath)

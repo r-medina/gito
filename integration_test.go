@@ -86,6 +86,14 @@ func TestAll(t *testing.T) {
 		// make sure get downloaded a repo
 
 		assert.True(isRepo(where), "%q is not a repo", where)
+
+		// the one downloaded with https:// in front
+
+		where, err = g.Where("go.lang")
+		assert.NoError(err, "where 'github.com/r-medina/go.lang")
+		assert.Equal(filepath.Join(dir, "src", "github.com/r-medina/go.lang"),
+			where,
+			"r-medina/go.lang not in expected location")
 	})
 
 	//
