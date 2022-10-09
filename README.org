@@ -104,7 +104,7 @@ directories namespaced by organization and repository
   #+end_src
 
 
-* Tell gito where your own code should love
+* Tell gito where your own code should live
 
   #+begin_src shell
     gito set-self github.com/r-medina
