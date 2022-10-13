@@ -10,6 +10,8 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/manifoldco/promptui"
 )
 
 type G struct {
@@ -76,26 +78,56 @@ func (g *G) Where(repo string) (string, error) {
 		return path, nil
 	}
 
-	return g.where(repo, true)
+	paths, err := g.where(repo, true)
+	if err != nil {
+		return "", err
+	}
+
+	if len(paths) == 1 {
+		return paths[0], nil
+	}
+	prompt := promptui.Select{
+		Label:  "Select a repo",
+		Items:  paths,
+		Stdout: os.Stderr,
+	}
+	_, path, err = prompt.Run()
+	if err != nil {
+		return "", err
+	}
+
+	return path, nil
 }
 
-func (g *G) where(maybePath string, checkIsRepo bool) (string, error) {
+func (g *G) where(maybePath string, checkIsRepo bool) ([]string, error) {
+	matches := map[string]struct{}{}
 	for _, dir := range g.config.active.path {
-		fullPath, ok := in(maybePath, filepath.Join(dir), "", checkIsRepo, 0)
+		newMatches, ok := in(maybePath, "", filepath.Join(dir), map[string]struct{}{}, checkIsRepo, 0)
 		if ok {
-			return fullPath, nil
+			for match := range newMatches {
+				matches[match] = struct{}{}
+			}
 		}
 	}
 
-	return "", fmt.Errorf("%q not found", maybePath)
+	if len(matches) == 0 {
+		return nil, fmt.Errorf("%q not found", maybePath)
+	}
 
+	paths := []string{}
+	for match := range matches {
+		paths = append(paths, match)
+	}
+
+	return paths, nil
 }
 
 // in is a recursive function that checks for repo inside of dir.
-func in(repo, dir, soFar string, checkIsRepo bool, depth int) (string, bool) {
+func in(repo, dir, soFar string, matches map[string]struct{}, checkIsRepo bool, depth int) (map[string]struct{}, bool) {
 	// don't check git directories
+	// we don't get here though because we don't go deep enough
 	if dir == ".git" {
-		return "", false
+		return matches, len(matches) > 0
 	}
 
 	fullPath := filepath.Join(soFar, dir, repo)
@@ -107,23 +139,26 @@ func in(repo, dir, soFar string, checkIsRepo bool, depth int) (string, bool) {
 	}
 
 	if repo == dir && dirIsRepo {
-		return fullPath, true
+		matches[fullPath] = struct{}{}
+		return matches, true
 	}
 
 	// in case repo is a partial name (ie r-medina/gito)
 	f, err := os.Stat(fullPath)
 	if err == nil && dirIsRepo {
-		return fullPath, f.IsDir() // make sure we're not getting a file
+		f.IsDir() // make sure we're not getting a file
+		matches[fullPath] = struct{}{}
+		return matches, len(matches) > 0
 	}
 
 	// don't want to go past repositories
 	if depth == 3 {
-		return "", false
+		return matches, len(matches) > 0
 	}
 
 	files, err := ioutil.ReadDir(filepath.Join(soFar, dir))
 	if err != nil {
-		return "", false
+		return matches, len(matches) > 0
 	}
 
 	for _, file := range files {
@@ -131,13 +166,15 @@ func in(repo, dir, soFar string, checkIsRepo bool, depth int) (string, bool) {
 			continue
 		}
 
-		fullPath, ok := in(repo, file.Name(), filepath.Join(soFar, dir), checkIsRepo, depth+1)
+		newMatches, ok := in(repo, file.Name(), filepath.Join(soFar, dir), matches, checkIsRepo, depth+1)
 		if ok {
-			return fullPath, true
+			for match := range newMatches {
+				matches[match] = struct{}{}
+			}
 		}
 	}
 
-	return "", false
+	return matches, len(matches) > 0
 }
 
 // isRepo tests for the existence of a .git directory at dir.
@@ -222,5 +259,10 @@ func (g *G) Self() (string, error) {
 		return "", nil
 	}
 
-	return g.where(self, false)
+	where, err := g.where(self, false)
+	if err != nil {
+		return "", err
+	}
+
+	return where[0], nil
 }
