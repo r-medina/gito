@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/manifoldco/promptui"
 	"github.com/r-medina/gito"
 )
 
@@ -71,10 +72,18 @@ var cmds = map[string]func(_ *gito.G, args ...string){
 		}
 
 		repo := args[0]
-		fullPath, err := g.Where(repo)
+		paths, err := g.Where(repo)
 		exitIfErr(err, "finding %q", repo)
 
-		fmt.Println(fullPath)
+		prompt := promptui.Select{
+			Label:  "select a repo",
+			Items:  paths,
+			Stdout: os.Stderr, // so it doesn't get lost in redirects
+		}
+		_, path, err := prompt.Run()
+		exitIfErr(err, "prompting for repo")
+
+		fmt.Println(path)
 	},
 
 	"url": func(g *gito.G, args ...string) {
@@ -87,8 +96,21 @@ var cmds = map[string]func(_ *gito.G, args ...string){
 			path = args[0]
 		}
 
-		url, err := g.URL(path)
+		urls, err := g.URL(path)
 		exitIfErr(err, "getting URL for %q", path)
+
+		if len(urls) == 1 {
+			fmt.Println(urls[0])
+			return
+		}
+
+		prompt := promptui.Select{
+			Label:  "select a repo",
+			Items:  urls,
+			Stdout: os.Stderr, // so it doesn't get lost in redirects
+		}
+		_, url, err := prompt.Run()
+		exitIfErr(err, "prompting for repo")
 
 		fmt.Println(url)
 	},

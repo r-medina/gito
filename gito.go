@@ -10,8 +10,6 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
-
-	"github.com/manifoldco/promptui"
 )
 
 type G struct {
@@ -71,32 +69,14 @@ func gitCloneAt(repo, fullPath string) (bool, error) {
 	return false, nil
 }
 
-func (g *G) Where(repo string) (string, error) {
+func (g *G) Where(repo string) ([]string, error) {
 	repo, _ = g.config.active.Alias(repo)
 	path, ok := g.config.active.CustomPath(repo)
 	if ok {
-		return path, nil
+		return []string{path}, nil
 	}
 
-	paths, err := g.where(repo, true)
-	if err != nil {
-		return "", err
-	}
-
-	if len(paths) == 1 {
-		return paths[0], nil
-	}
-	prompt := promptui.Select{
-		Label:  "Select a repo",
-		Items:  paths,
-		Stdout: os.Stderr,
-	}
-	_, path, err = prompt.Run()
-	if err != nil {
-		return "", err
-	}
-
-	return path, nil
+	return g.where(repo, true)
 }
 
 func (g *G) where(maybePath string, checkIsRepo bool) ([]string, error) {
@@ -183,16 +163,31 @@ func isRepo(dir string) bool {
 	return !os.IsNotExist(err)
 }
 
-func (g *G) URL(repo string) (string, error) {
-	cmd := exec.Command("git", "remote", "get-url", "origin")
-
+func (g *G) URL(repo string) ([]string, error) {
+	var paths = []string{"."}
 	if repo != "." {
-		fullPath, err := g.Where(repo)
+		var err error
+		paths, err = g.Where(repo)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
-		cmd.Dir = fullPath
 	}
+
+	urls := []string{}
+	for _, path := range paths {
+		url, err := g.url(path)
+		if err != nil {
+			return nil, err
+		}
+		urls = append(urls, url)
+	}
+
+	return urls, nil
+}
+
+func (g *G) url(repo string) (string, error) {
+	cmd := exec.Command("git", "remote", "get-url", "origin")
+	cmd.Dir = repo
 
 	buf := &bytes.Buffer{}
 	cmd.Stdout = buf
