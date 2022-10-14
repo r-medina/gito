@@ -4,9 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"strings"
 
 	"github.com/manifoldco/promptui"
+
 	"github.com/r-medina/gito"
 )
 
@@ -78,21 +78,10 @@ var cmds = map[string]func(_ *gito.G, args ...string){
 
 		prompt := promptui.Select{
 			Label: "select a repo",
-			Items: func() []string {
-				// trims directories ending at src/
-				// ie /home/rmedina/go/src/github.com/r-medina/gito
-				// becomes github.com/r-medina/gito
-
-				for i, path := range paths {
-					if !strings.Contains(path, "src") {
-						continue
-					}
-
-					paths[i] = path[strings.Index(path, "src")+4:]
-				}
-
-				return paths
-			}(),
+			Items: paths,
+			Templates: &promptui.SelectTemplates{
+				Label: "{{ .trimmedPath }}?",
+			},
 			Stdout: os.Stderr, // so it doesn't get lost in redirects
 		}
 		_, path, err := prompt.Run()
@@ -120,16 +109,8 @@ var cmds = map[string]func(_ *gito.G, args ...string){
 		}
 
 		prompt := promptui.Select{
-			Label: "select a repo",
-			Items: func() []string {
-				for i, url := range urls {
-					// parses url and removes the protocol
-
-					urls[i] = url[strings.Index(url, "://")+3:]
-				}
-
-				return urls
-			}(),
+			Label:  "select a repo",
+			Items:  urls,
 			Stdout: os.Stderr, // so it doesn't get lost in redirects
 		}
 		_, url, err := prompt.Run()
