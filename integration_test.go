@@ -57,13 +57,13 @@ func TestAll(t *testing.T) {
 	// test where
 	//
 
-	var where string
+	var where []string
 	t.Run("get", func(t *testing.T) {
 		// with full name of repo
 
 		where, err = g.Where("github.com/r-medina/gito")
 		assert.NoError(err, "where 'github.com/r-medina/gito")
-		assert.Equal(filepath.Join(dir, "src", "github.com/r-medina/gito"),
+		assert.Equal([]string{filepath.Join(dir, "src", "github.com/r-medina/gito")},
 			where,
 			"r-medina/gito not in expected location")
 
@@ -71,7 +71,7 @@ func TestAll(t *testing.T) {
 
 		where, err = g.Where("r-medina/gito")
 		assert.NoError(err, "where 'r-medina/gito")
-		assert.Equal(filepath.Join(dir, "src", "github.com/r-medina/gito"),
+		assert.Equal([]string{filepath.Join(dir, "src", "github.com/r-medina/gito")},
 			where,
 			"r-medina/gito not in expected location")
 
@@ -79,19 +79,19 @@ func TestAll(t *testing.T) {
 
 		where, err = g.Where("gito")
 		assert.NoError(err, "where 'gito")
-		assert.Equal(filepath.Join(dir, "src", "github.com/r-medina/gito"),
+		assert.Equal([]string{filepath.Join(dir, "src", "github.com/r-medina/gito")},
 			where,
 			"gito not in expected location")
 
 		// make sure get downloaded a repo
 
-		assert.True(isRepo(where), "%q is not a repo", where)
+		assert.True(isRepo(where[0]), "%q is not a repo", where[0])
 
 		// the one downloaded with https:// in front
 
 		where, err = g.Where("go.lang")
 		assert.NoError(err, "where 'github.com/r-medina/go.lang")
-		assert.Equal(filepath.Join(dir, "src", "github.com/r-medina/go.lang"),
+		assert.Equal([]string{filepath.Join(dir, "src", "github.com/r-medina/go.lang")},
 			where,
 			"r-medina/go.lang not in expected location")
 	})
@@ -103,7 +103,7 @@ func TestAll(t *testing.T) {
 	t.Run("url", func(t *testing.T) {
 		url, err := g.URL("gito")
 		assert.NoError(err, "getting 'gito' url")
-		assert.Equal("https://github.com/r-medina/gito", url, "url for 'gito'")
+		assert.Equal([]string{"https://github.com/r-medina/gito"}, url, "url for 'gito'")
 	})
 
 	//
@@ -124,7 +124,7 @@ func TestAll(t *testing.T) {
 		// make sure where still works
 		where, err = g.Where("g")
 		assert.NoError(err, "where 'gito")
-		assert.Equal(filepath.Join(dir, "src", "github.com/r-medina/gito"),
+		assert.Equal([]string{filepath.Join(dir, "src", "github.com/r-medina/gito")},
 			where,
 			"'g' not in expected location")
 	})
@@ -141,7 +141,7 @@ func TestAll(t *testing.T) {
 		err = g.Set("this", want)
 		assert.NoError(err, "calling set")
 		where, err = g.Where("this")
-		assert.Equal(want, where, "calling where on 'this' after setting")
+		assert.Equal([]string{want}, where, "calling where on 'this' after setting")
 	})
 
 	//

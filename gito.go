@@ -36,7 +36,7 @@ func (g *G) Get(repo string) error {
 	}
 
 	if exists, err := gitCloneAt(repo, fullPath); exists {
-		return fmt.Errorf("something already exists at %q", fullPath)
+		return fmt.Errorf("gito: something already exists at %q", fullPath)
 	} else if err != nil {
 		return err
 	}
@@ -174,12 +174,18 @@ func (g *G) URL(repo string) ([]string, error) {
 	}
 
 	urls := []string{}
+	errs := []error{}
 	for _, path := range paths {
 		url, err := g.url(path)
 		if err != nil {
-			return nil, err
+			errs = append(errs, err)
+			continue
 		}
 		urls = append(urls, url)
+	}
+
+	if len(errs) == len(paths) {
+		return nil, fmt.Errorf("gito: no URLs found")
 	}
 
 	return urls, nil
