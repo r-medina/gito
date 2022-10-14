@@ -76,12 +76,14 @@ var cmds = map[string]func(_ *gito.G, args ...string){
 		paths, err := g.Where(repo)
 		exitIfErr(err, "finding %q", repo)
 
+		if len(paths) == 1 {
+			fmt.Println(paths[0])
+			return
+		}
+
 		prompt := promptui.Select{
-			Label: "select a repo",
-			Items: paths,
-			Templates: &promptui.SelectTemplates{
-				Label: "{{ .trimmedPath }}?",
-			},
+			Label:  "select a repo",
+			Items:  paths,
 			Stdout: os.Stderr, // so it doesn't get lost in redirects
 		}
 		_, path, err := prompt.Run()
