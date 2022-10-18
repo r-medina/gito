@@ -125,8 +125,7 @@ func in(repo, dir, soFar string, matches map[string]struct{}, checkIsRepo bool, 
 
 	// in case repo is a partial name (ie r-medina/gito)
 	f, err := os.Stat(fullPath)
-	if err == nil && dirIsRepo {
-		f.IsDir() // make sure we're not getting a file
+	if err == nil && f.IsDir() {
 		matches[fullPath] = struct{}{}
 		return matches, len(matches) > 0
 	}
