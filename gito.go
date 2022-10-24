@@ -203,18 +203,17 @@ func (g *G) url(repo string) (string, error) {
 	url := buf.String()
 	url = strings.TrimSpace(url)
 
-	if strings.HasPrefix(url, "git@") {
-		url = strings.TrimPrefix(url, "git@")
-		url = strings.Replace(url, ":", "/", 1)
-		buf.Reset()
-		buf.WriteString("https://")
-		buf.WriteString(url)
-		url = buf.String()
-	}
+	// removes prefix of url if it starts with ssh:// or git@
+	url = strings.Replace(url, "git@", "", 1)
+	url = strings.Replace(url, "ssh://", "", 1)
+	url = strings.Replace(url, ":", "/", 1)
+	url = strings.Replace(url, ".git", "", 1)
+	buf.Reset()
+	buf.WriteString("https://")
+	buf.WriteString(url)
+	url = buf.String()
 
 	// when origin is specified with http, all we need to do is trim suffix
-
-	url = strings.TrimSuffix(url, ".git")
 
 	return url, nil
 }
