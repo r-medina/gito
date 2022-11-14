@@ -110,6 +110,11 @@ func in(repo, dir, soFar string, matches map[string]struct{}, checkIsRepo bool, 
 		return matches, len(matches) > 0
 	}
 
+	// don't want to go past repositories
+	if depth == 3 {
+		return matches, len(matches) > 0
+	}
+
 	fullPath := filepath.Join(soFar, dir, repo)
 
 	// found it
@@ -127,11 +132,6 @@ func in(repo, dir, soFar string, matches map[string]struct{}, checkIsRepo bool, 
 	f, err := os.Stat(fullPath)
 	if err == nil && f.IsDir() {
 		matches[fullPath] = struct{}{}
-		return matches, len(matches) > 0
-	}
-
-	// don't want to go past repositories
-	if depth == 3 {
 		return matches, len(matches) > 0
 	}
 
