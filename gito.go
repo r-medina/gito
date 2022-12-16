@@ -104,12 +104,6 @@ func (g *G) where(maybePath string, checkIsRepo bool) ([]string, error) {
 
 // in is a recursive function that checks for repo inside of dir.
 func in(repo, dir, soFar string, matches map[string]struct{}, checkIsRepo bool, depth int) (map[string]struct{}, bool) {
-	// don't check git directories
-	// we don't get here though because we don't go deep enough
-	if dir == ".git" {
-		return matches, len(matches) > 0
-	}
-
 	// don't want to go past repositories
 	if depth == 3 {
 		return matches, len(matches) > 0
@@ -130,7 +124,7 @@ func in(repo, dir, soFar string, matches map[string]struct{}, checkIsRepo bool, 
 
 	// in case repo is a partial name (ie r-medina/gito)
 	f, err := os.Stat(fullPath)
-	if err == nil && f.IsDir() {
+	if err == nil && f.IsDir() && dirIsRepo {
 		matches[fullPath] = struct{}{}
 		return matches, len(matches) > 0
 	}
