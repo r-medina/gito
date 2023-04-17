@@ -169,7 +169,7 @@ func (g *G) URL(repo string) ([]string, error) {
 	urls := []string{}
 	errs := []error{}
 	for _, path := range paths {
-		url, err := g.url(path)
+		url, err := getURL(path)
 		if err != nil {
 			errs = append(errs, err)
 			continue
@@ -184,7 +184,7 @@ func (g *G) URL(repo string) ([]string, error) {
 	return urls, nil
 }
 
-func (g *G) url(repo string) (string, error) {
+func getURL(repo string) (string, error) {
 	cmd := exec.Command("git", "remote", "get-url", "origin")
 	cmd.Dir = repo
 
@@ -200,6 +200,8 @@ func (g *G) url(repo string) (string, error) {
 	// removes prefix of url if it starts with ssh:// or git@
 	url = strings.Replace(url, "git@", "", 1)
 	url = strings.Replace(url, "ssh://", "", 1)
+	url = strings.Replace(url, "http://", "", 1)
+	url = strings.Replace(url, "https://", "", 1)
 	url = strings.Replace(url, ":", "/", 1)
 	url = strings.Replace(url, ".git", "", 1)
 	buf.Reset()
