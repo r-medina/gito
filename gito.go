@@ -3,13 +3,14 @@ package gito
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io/fs"
 	"net/url"
 	"os"
 	"os/exec"
 	"path"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 type G struct {
@@ -81,8 +82,9 @@ func (g *G) Where(repo string) ([]string, error) {
 
 func (g *G) where(maybePath string, checkIsRepo bool) ([]string, error) {
 	matches := map[string]struct{}{}
+	mtx := sync.Mutex{}
 	for _, dir := range g.config.active.path {
-		newMatches, ok := in(maybePath, "", filepath.Join(dir), map[string]struct{}{}, checkIsRepo, 0)
+		newMatches, ok := in(maybePath, "", filepath.Join(dir), map[string]struct{}{}, checkIsRepo, 0, &mtx)
 		if ok {
 			for match := range newMatches {
 				matches[match] = struct{}{}
@@ -103,7 +105,7 @@ func (g *G) where(maybePath string, checkIsRepo bool) ([]string, error) {
 }
 
 // in is a recursive function that checks for repo inside of dir.
-func in(repo, dir, soFar string, matches map[string]struct{}, checkIsRepo bool, depth int) (map[string]struct{}, bool) {
+func in(repo, dir, soFar string, matches map[string]struct{}, checkIsRepo bool, depth int, mtx *sync.Mutex) (map[string]struct{}, bool) {
 	// don't want to go past repositories
 	if depth == 3 {
 		return matches, len(matches) > 0
@@ -118,34 +120,46 @@ func in(repo, dir, soFar string, matches map[string]struct{}, checkIsRepo bool, 
 	}
 
 	if repo == dir && dirIsRepo {
+		mtx.Lock()
 		matches[fullPath] = struct{}{}
+		mtx.Unlock()
 		return matches, true
 	}
 
 	// in case repo is a partial name (ie r-medina/gito)
 	f, err := os.Stat(fullPath)
 	if err == nil && f.IsDir() && dirIsRepo {
+		mtx.Lock()
 		matches[fullPath] = struct{}{}
+		mtx.Unlock()
 		return matches, len(matches) > 0
 	}
 
-	files, err := ioutil.ReadDir(filepath.Join(soFar, dir))
+	files, err := os.ReadDir(filepath.Join(soFar, dir))
 	if err != nil {
 		return matches, len(matches) > 0
 	}
 
+	wg := sync.WaitGroup{}
 	for _, file := range files {
 		if !file.IsDir() {
 			continue
 		}
 
-		newMatches, ok := in(repo, file.Name(), filepath.Join(soFar, dir), matches, checkIsRepo, depth+1)
-		if ok {
-			for match := range newMatches {
-				matches[match] = struct{}{}
+		wg.Add(1)
+		go func(file fs.DirEntry) {
+			defer wg.Done()
+			newMatches, ok := in(repo, file.Name(), filepath.Join(soFar, dir), matches, checkIsRepo, depth+1, mtx)
+			if ok {
+				mtx.Lock()
+				for match := range newMatches {
+					matches[match] = struct{}{}
+				}
+				mtx.Unlock()
 			}
-		}
+		}(file)
 	}
+	wg.Wait()
 
 	return matches, len(matches) > 0
 }
