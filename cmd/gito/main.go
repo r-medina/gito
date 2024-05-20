@@ -176,8 +176,8 @@ func main() {
 
 	g := gito.New(config)
 
-	cmd := cmds[flag.Args()[0]]
-	if cmd == nil {
+	cmd, ok := cmds[flag.Args()[0]]
+	if !ok {
 		usage()
 		os.Exit(1)
 	}

@@ -205,10 +205,13 @@ func getURL(repo string) (string, error) {
 	buf := &bytes.Buffer{}
 	cmd.Stdout = buf
 	if err := cmd.Run(); err != nil {
-		return "", fmt.Errorf("error getting git remote for %q", repo)
+		return "", fmt.Errorf("error getting git remote for %q: %v", repo, err)
 	}
 
-	url := buf.String()
+	return extractURL(buf.String()), nil
+}
+
+func extractURL(url string) string {
 	url = strings.TrimSpace(url)
 
 	// removes prefix of url if it starts with ssh:// or git@
@@ -218,14 +221,8 @@ func getURL(repo string) (string, error) {
 	url = strings.Replace(url, "https://", "", 1)
 	url = strings.Replace(url, ":", "/", 1)
 	url = strings.Replace(url, ".git", "", 1)
-	buf.Reset()
-	buf.WriteString("https://")
-	buf.WriteString(url)
-	url = buf.String()
 
-	// when origin is specified with http, all we need to do is trim suffix
-
-	return url, nil
+	return "https://" + url
 }
 
 func (g *G) Alias(from, to string) error {

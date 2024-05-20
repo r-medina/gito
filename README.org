@@ -33,92 +33,92 @@ directories namespaced by organization and repository
 
 * Installation
 
-  #+begin_src shell
-    go install -u github.com/r-medina/gito
-  #+end_src
+#+begin_src shell
+  go install -u github.com/r-medina/gito
+#+end_src
 
 
 * Download code
 
-  #+begin_src shell :noeval
-    # this defaults to GOPATH[0]/src/github.com/... or $HOME/src/...
+#+begin_src shell :noeval
+  # this defaults to GOPATH[0]/src/github.com/... or $HOME/src/...
 
-    gito get github.com/r-medina/gito
-  #+end_src
+  gito get github.com/r-medina/gito
+#+end_src
 
-  the =get= command does need the full GitHub path to a repo, but from
-  here on you can use any subset of the repo name (eg =gito=)
+the =get= command does need the full GitHub path to a repo, but from
+here on you can use any subset of the repo name (eg =gito=)
 
-  You can include the entire github url, eg =https://github.com/r-medina/gito=
+You can include the entire github url, eg =https://github.com/r-medina/gito=
 
 
 * Find out where repo is
 
-  #+begin_src shell
-    gito where r-medina/gito # $HOME/go/src/github.com/r-medina/gito
-  #+end_src
+#+begin_src shell
+  gito where r-medina/gito # $HOME/go/src/github.com/r-medina/gito
+#+end_src
 
-  Can also find code with just repo name
-  #+begin_src shell
-    gito where gito # $HOME/go/src/github.com/r-medina/gito
-  #+end_src
+Can also find code with just repo name
+#+begin_src shell
+  gito where gito # $HOME/go/src/github.com/r-medina/gito
+#+end_src
 
-  Which you can easily cd into
-  #+begin_src shell
-    cd $(gito where gito)
-  #+end_src
+Which you can easily cd into
+#+begin_src shell
+  cd $(gito where gito)
+#+end_src
 
-  /it's helpful to set an alias in your shell to that cd command/
+/it's helpful to set an alias in your shell to that cd command/
 
 
 * Find repo online
 
-  #+begin_src shell
-    gito url gito         # https://github.com/r-medina/gito
-    open $(gito url gito) # opens in brownser
-  #+end_src
+#+begin_src shell
+  gito url gito         # https://github.com/r-medina/gito
+  open $(gito url gito) # opens in brownser
+#+end_src
 
 
 * Tell gito where a repo lives
 
-  #+begin_src shell
-    gito set r-medina/gito <path> # saves the location information to path
-    gito where r-medina/gito        # <path>
-  #+end_src
+#+begin_src shell
+  gito set r-medina/gito <path> # saves the location information to path
+  gito where r-medina/gito        # <path>
+#+end_src
 
-  when a repo's location is set, only that name can be used, but you
-  can set =r-medina/gito= and =gito= to =<path>= so that both work!
+when a repo's location is set, only that name can be used, but you
+can set =r-medina/gito= and =gito= to =<path>= so that both work!
 
 
 * Make alias for repo
 
-  #+begin_src shell
-    gito alias g github.com/mvdan/garble
-    gito where g # $HOME/go/src/github.com/mvdan/garble
-  #+end_src
+#+begin_src shell
+  gito alias g github.com/mvdan/garble
+  gito where g # $HOME/go/src/github.com/mvdan/garble
+#+end_src
 
-  #+begin_src shell
-    gito alias d dotfiles
-    gito set dotfiles ~/.dotfiles # $HOME
-    cd $(gito where d)
-  #+end_src
+#+begin_src shell
+  gito alias d dotfiles
+  gito set dotfiles ~/.dotfiles # $HOME
+  cd $(gito where d)
+#+end_src
 
 
 * Tell gito where your own code should live
 
-  #+begin_src shell
-    gito set-self github.com/r-medina
-    cd $(gito self)
-  #+end_src
+#+begin_src shell
+  gito set-self github.com/r-medina
+  cd $(gito self)
+#+end_src
 
 
 * Use different workspaces
 
-  see config for how to set these up, but
+see config for how to set these up, but
 
-  #+begin_src shell
-    gito -w=work where gh # $HOME/where-i-keep-work-code/src/github.com/github
-  #+end_src
+#+begin_src shell
+  gito -w=work where gh # $HOME/where-i-keep-work-code/src/github.com/github
+#+end_src
 
 
 * Usage
@@ -162,64 +162,105 @@ directories namespaced by organization and repository
 
 * Useful aliases
 
-  Add the following to your shell:
-  #+begin_src shell
-    whence gito > /dev/null || return
+Add the following to your shell:
+#+begin_src shell
+# Ensure 'gito' is available in the PATH
+whence gito >/dev/null || return 1
 
-    gicd() {
-	if [[ $1 == "." ]]
-	then
-	    cd $(git rev-parse --show-toplevel)
-	else
-	    cd $(gito where $1)
-	fi
-    }
+# Function to change directory to a Git repository's top-level directory or a specific repo location
+gicd() {
+    if [[ -z "$1" ]]; then
+        echo "Usage: gicd <repository> | ."
+        return 1
+    fi
 
-    gpen() {
-	open $(gito url $1)
-    }
+    if [[ $1 == "." ]]; then
+        local top_level
+        top_level=$(git rev-parse --show-toplevel 2>/dev/null)
+        if [[ -z "$top_level" ]]; then
+            echo "Error: Not inside a Git repository."
+            return 1
+        fi
+        cd "$top_level" || return 1
+    else
+        local repo_path
+        repo_path=$(gito where "$1" 2>/dev/null)
+        if [[ -z "$repo_path" ]]; then
+            echo "Error: Repository '$1' not found."
+            return 1
+        fi
+        cd "$repo_path" || return 1
+    fi
+}
 
-    gmk() {
-	local dirName=$1
-	local self=$(gito self)
+# Function to open a URL related to a Git repository
+gpen() {
+    if [[ -z "$1" ]]; then
+        echo "Usage: gpen <repository>"
+        return 1
+    fi
 
-	cd $self
+    local url
+    url=$(gito url "$1" 2>/dev/null)
+    if [[ -z "$url" ]]; then
+        echo "Error: URL for repository '$1' not found."
+        return 1
+    fi
 
-	mkdir $dirName
-	cd $dirName
-	git init
-    }
+    open "$url" || return 1
+}
+
+# Function to create a new Git repository directory and initialize it
+gmk() {
+    if [[ -z "$1" ]]; then
+        echo "Usage: gmk <directory_name>"
+        return 1
+    fi
+
+    local dir_name=$1
+    local self
+    self=$(gito self 2>/dev/null)
+    if [[ -z "$self" ]]; then
+        echo "Error: Could not determine self repository location."
+        return 1
+    fi
+
+    cd "$self" || return 1
+    mkdir -p "$dir_name" || return 1
+    cd "$dir_name" || return 1
+    git init || return 1
+}
   #+end_src
 
-  This makes going into your source code directories really easy =gcd
-  gito= as well as opening the repository in a web browser.
+This makes going into your source code directories really easy =gcd
+gito= as well as opening the repository in a web browser.
 
 
 * Example Config
 
-  gito cannot do shell expansion for now, so add full paths to the
-  config file.
+gito cannot do shell expansion for now, so add full paths to the
+config file.
 
-  #+begin_src yaml
-    workspaces:
-      - name: personal
-        path: "/Users/ricky"
-        aliases:
-          g: gito
-          d: dotfiles
-        custom:
-          dotfiles: "/Users/ricky/.dotfiles"
-      - name: work
-        path: "/Users/ricky/gh"
-        aliases:
-          ghe: super-secret
-        custom:
-          super-secret: "somewhereElse/theMoneyMaker
-  #+end_src
+#+begin_src yaml
+workspaces:
+  - name: personal
+    path: "/Users/ricky"
+    aliases:
+      g: gito
+      d: dotfiles
+    custom:
+      dotfiles: "/Users/ricky/.dotfiles"
+  - name: work
+    path: "/Users/ricky/gh"
+    aliases:
+      ghe: super-secret
+    custom:
+      super-secret: "somewhereElse/theMoneyMaker
+#+end_src
 
 
 * Caveats
 
-  - only works with git
-  - only tested with github
+- only works with git
+- only tested with github
 

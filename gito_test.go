@@ -1,6 +1,8 @@
 package gito
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestURL(t *testing.T) {
 	urls := []string{
@@ -9,13 +11,9 @@ func TestURL(t *testing.T) {
 	}
 
 	for _, url := range urls {
-		urlStr, err := getURL(url)
-		if err != nil {
-			t.Errorf("error getting url for %q: %v", url, err)
-		}
-
-		if expected := "https://github.com/r-medina/gito.git"; urlStr != expected {
-			t.Errorf("url for %q is %q, expected %q", url, expected, urlStr)
+		urlStr := extractURL(url)
+		if expected := "https://github.com/r-medina/gito"; urlStr != expected {
+			t.Errorf("url for %q is %q, expected %q", url, urlStr, expected)
 		}
 	}
 }
