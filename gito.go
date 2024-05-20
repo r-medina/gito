@@ -105,41 +105,43 @@ func (g *G) where(maybePath string, checkIsRepo bool) ([]string, error) {
 }
 
 // in is a recursive function that checks for repo inside of dir.
-func in(repo, dir, soFar string, matches map[string]struct{}, checkIsRepo bool, depth int, mtx *sync.Mutex) (map[string]struct{}, bool) {
-	// don't want to go past repositories
+func in(repo, dir, so_far string, matches map[string]struct{}, check_is_repo bool, depth int, mtx *sync.Mutex) (map[string]struct{}, bool) {
+	// limit recursion depth
 	if depth == 3 {
 		return matches, len(matches) > 0
 	}
 
-	fullPath := filepath.Join(soFar, dir, repo)
+	full_path := filepath.Join(so_far, dir, repo)
 
-	// found it
-	dirIsRepo := true
-	if checkIsRepo {
-		dirIsRepo = isRepo(fullPath)
+	// check if the directory is a repository
+	dir_is_repo := true
+	if check_is_repo {
+		dir_is_repo = isRepo(full_path)
 	}
 
-	if repo == dir && dirIsRepo {
+	if repo == dir && dir_is_repo {
 		mtx.Lock()
-		matches[fullPath] = struct{}{}
+		matches[full_path] = struct{}{}
 		mtx.Unlock()
 		return matches, true
 	}
 
-	// in case repo is a partial name (ie r-medina/gito)
-	f, err := os.Stat(fullPath)
-	if err == nil && f.IsDir() && dirIsRepo {
+	// handle partial name matches
+	f, err := os.Stat(full_path)
+	if err == nil && f.IsDir() && dir_is_repo {
 		mtx.Lock()
-		matches[fullPath] = struct{}{}
+		matches[full_path] = struct{}{}
 		mtx.Unlock()
 		return matches, len(matches) > 0
 	}
 
-	files, err := os.ReadDir(filepath.Join(soFar, dir))
+	files, err := os.ReadDir(filepath.Join(so_far, dir))
 	if err != nil {
 		return matches, len(matches) > 0
 	}
 
+	// collect results in a thread-local manner
+	local_matches := make(map[string]struct{})
 	wg := sync.WaitGroup{}
 	for _, file := range files {
 		if !file.IsDir() {
@@ -149,17 +151,24 @@ func in(repo, dir, soFar string, matches map[string]struct{}, checkIsRepo bool, 
 		wg.Add(1)
 		go func(file fs.DirEntry) {
 			defer wg.Done()
-			newMatches, ok := in(repo, file.Name(), filepath.Join(soFar, dir), matches, checkIsRepo, depth+1, mtx)
+			new_matches, ok := in(repo, file.Name(), filepath.Join(so_far, dir), matches, check_is_repo, depth+1, mtx)
 			if ok {
 				mtx.Lock()
-				for match := range newMatches {
-					matches[match] = struct{}{}
+				for match := range new_matches {
+					local_matches[match] = struct{}{}
 				}
 				mtx.Unlock()
 			}
 		}(file)
 	}
 	wg.Wait()
+
+	// merge local matches into global matches
+	mtx.Lock()
+	for match := range local_matches {
+		matches[match] = struct{}{}
+	}
+	mtx.Unlock()
 
 	return matches, len(matches) > 0
 }
