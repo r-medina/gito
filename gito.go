@@ -104,44 +104,41 @@ func (g *G) where(maybePath string, checkIsRepo bool) ([]string, error) {
 	return paths, nil
 }
 
-// in is a recursive function that checks for repo inside of dir.
-func in(repo, dir, so_far string, matches map[string]struct{}, check_is_repo bool, depth int, mtx *sync.Mutex) (map[string]struct{}, bool) {
+func in(repo, dir, soFar string, matches map[string]struct{}, checkIsRepo bool, depth int, mtx *sync.Mutex) (map[string]struct{}, bool) {
 	// limit recursion depth
 	if depth == 3 {
 		return matches, len(matches) > 0
 	}
 
-	full_path := filepath.Join(so_far, dir, repo)
+	fullPath := filepath.Join(soFar, dir, repo)
 
 	// check if the directory is a repository
-	dir_is_repo := true
-	if check_is_repo {
-		dir_is_repo = isRepo(full_path)
-	}
+	dirIsRepo := !checkIsRepo || isRepo(fullPath)
 
-	if repo == dir && dir_is_repo {
+	if repo == dir && dirIsRepo {
 		mtx.Lock()
-		matches[full_path] = struct{}{}
+		matches[fullPath] = struct{}{}
 		mtx.Unlock()
 		return matches, true
 	}
 
 	// handle partial name matches
-	f, err := os.Stat(full_path)
-	if err == nil && f.IsDir() && dir_is_repo {
+	f, err := os.Stat(fullPath)
+	if err == nil && f.IsDir() && dirIsRepo {
 		mtx.Lock()
-		matches[full_path] = struct{}{}
+		matches[fullPath] = struct{}{}
 		mtx.Unlock()
 		return matches, len(matches) > 0
 	}
 
-	files, err := os.ReadDir(filepath.Join(so_far, dir))
+	files, err := os.ReadDir(filepath.Join(soFar, dir))
 	if err != nil {
 		return matches, len(matches) > 0
 	}
 
 	// collect results in a thread-local manner
-	local_matches := make(map[string]struct{})
+	localMatches := make(map[string]struct{})
+	var localMtx sync.Mutex
 	wg := sync.WaitGroup{}
 	for _, file := range files {
 		if !file.IsDir() {
@@ -151,13 +148,13 @@ func in(repo, dir, so_far string, matches map[string]struct{}, check_is_repo boo
 		wg.Add(1)
 		go func(file fs.DirEntry) {
 			defer wg.Done()
-			new_matches, ok := in(repo, file.Name(), filepath.Join(so_far, dir), matches, check_is_repo, depth+1, mtx)
+			newMatches, ok := in(repo, file.Name(), filepath.Join(soFar, dir), make(map[string]struct{}), checkIsRepo, depth+1, mtx)
 			if ok {
-				mtx.Lock()
-				for match := range new_matches {
-					local_matches[match] = struct{}{}
+				localMtx.Lock()
+				for match := range newMatches {
+					localMatches[match] = struct{}{}
 				}
-				mtx.Unlock()
+				localMtx.Unlock()
 			}
 		}(file)
 	}
@@ -165,7 +162,7 @@ func in(repo, dir, so_far string, matches map[string]struct{}, check_is_repo boo
 
 	// merge local matches into global matches
 	mtx.Lock()
-	for match := range local_matches {
+	for match := range localMatches {
 		matches[match] = struct{}{}
 	}
 	mtx.Unlock()
