@@ -105,8 +105,9 @@ func (g *G) where(maybePath string, checkIsRepo bool) ([]string, error) {
 }
 
 func in(repo, dir, soFar string, matches map[string]struct{}, checkIsRepo bool, depth int, mtx *sync.Mutex) (map[string]struct{}, bool) {
-	// limit recursion depth
-	if depth == 3 {
+	// limit recursion depth - gitlab does let you do sub directories, so
+	// increased from 3 to 4 to support them
+	if depth == 4 {
 		return matches, len(matches) > 0
 	}
 
