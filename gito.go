@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 )
@@ -221,15 +222,23 @@ func getURL(repo string) (string, error) {
 func extractURL(url string) string {
 	url = strings.TrimSpace(url)
 
-	// removes prefix of url if it starts with ssh:// or git@
-	url = strings.Replace(url, "git@", "", 1)
-	url = strings.Replace(url, "ssh://", "", 1)
-	url = strings.Replace(url, "http://", "", 1)
-	url = strings.Replace(url, "https://", "", 1)
-	url = strings.Replace(url, ":", "/", 1)
-	url = strings.Replace(url, ".git", "", 1)
+	// Regex to parse different Git URL formats
+	patterns := []string{
+		`^git@([^:]+):(.+?)(?:\.git)?$`,                         // SSH: git@host:path
+		`^(?:https?|ssh)://(?:[^@]+@)?([^/]+)/(.+?)(?:\.git)?$`, // HTTP/HTTPS/SSH with protocol
+	}
 
-	return "https://" + url
+	for _, pattern := range patterns {
+		re := regexp.MustCompile(pattern)
+		if matches := re.FindStringSubmatch(url); matches != nil {
+			host := matches[1]
+			path := matches[2]
+			return fmt.Sprintf("https://%s/%s", host, path)
+		}
+	}
+
+	// Fallback: assume it's already in a clean format
+	return "https://" + strings.TrimSuffix(url, ".git")
 }
 
 func (g *G) Alias(from, to string) error {
