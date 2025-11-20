@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"sync"
 )
 
 type G struct {
@@ -78,98 +77,57 @@ func (g *G) Where(repo string) ([]string, error) {
 		return []string{path}, nil
 	}
 
-	return g.where(repo, true)
+	return g.find(repo, true)
 }
 
-func (g *G) where(maybePath string, checkIsRepo bool) ([]string, error) {
-	matches := map[string]struct{}{}
-	mtx := sync.Mutex{}
+func (g *G) find(repo string, checkIsRepo bool) ([]string, error) {
+	matches := []string{}
 	for _, dir := range g.config.active.path {
-		newMatches, ok := in(maybePath, "", filepath.Join(dir), map[string]struct{}{}, checkIsRepo, 0, &mtx)
-		if ok {
-			for match := range newMatches {
-				matches[match] = struct{}{}
+		err := filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return nil // ignore errors accessing files
 			}
+
+			if d.IsDir() && d.Name() == ".git" {
+				return filepath.SkipDir
+			}
+
+			// Calculate depth relative to the root dir
+			rel, err := filepath.Rel(dir, path)
+			if err != nil {
+				return nil
+			}
+			depth := strings.Count(rel, string(os.PathSeparator))
+			if depth > 4 {
+				if d.IsDir() {
+					return filepath.SkipDir
+				}
+				return nil
+			}
+
+			if !d.IsDir() {
+				return nil
+			}
+
+			// Check if the directory name matches the repo we are looking for
+			if d.Name() == repo {
+				if !checkIsRepo || isRepo(path) {
+					matches = append(matches, path)
+				}
+			}
+
+			return nil
+		})
+		if err != nil {
+			// WalkDir error (shouldn't happen with our ignore policy, but good to log/handle if we had a logger)
 		}
 	}
 
 	if len(matches) == 0 {
-		return nil, fmt.Errorf("%q not found", maybePath)
+		return nil, fmt.Errorf("%q not found", repo)
 	}
 
-	paths := []string{}
-	for match := range matches {
-		paths = append(paths, match)
-	}
-
-	return paths, nil
-}
-
-func in(repo, dir, soFar string, matches map[string]struct{}, checkIsRepo bool, depth int, mtx *sync.Mutex) (map[string]struct{}, bool) {
-	// limit recursion depth - gitlab does let you do sub directories, so
-	// increased from 3 to 4 to support them
-	if depth == 4 {
-		return matches, len(matches) > 0
-	}
-
-	fullPath := filepath.Join(soFar, dir, repo)
-
-	// check if the directory is a repository
-	dirIsRepo := !checkIsRepo || isRepo(fullPath)
-
-	if repo == dir && dirIsRepo {
-		mtx.Lock()
-		matches[fullPath] = struct{}{}
-		mtx.Unlock()
-		return matches, true
-	}
-
-	// handle partial name matches
-	f, err := os.Stat(fullPath)
-	if err == nil && f.IsDir() && dirIsRepo {
-		mtx.Lock()
-		matches[fullPath] = struct{}{}
-		mtx.Unlock()
-		return matches, len(matches) > 0
-	}
-
-	files, err := os.ReadDir(filepath.Join(soFar, dir))
-	if err != nil {
-		return matches, len(matches) > 0
-	}
-
-	// collect results in a thread-local manner
-	localMatches := make(map[string]struct{})
-	var localMtx sync.Mutex
-	wg := sync.WaitGroup{}
-	for _, file := range files {
-		if !file.IsDir() {
-			continue
-		}
-
-		wg.Add(1)
-		go func(file fs.DirEntry) {
-			defer wg.Done()
-			newMatches, ok := in(repo, file.Name(), filepath.Join(soFar, dir), make(map[string]struct{}), checkIsRepo, depth+1, mtx)
-			if ok {
-				localMtx.Lock()
-				for match := range newMatches {
-					localMatches[match] = struct{}{}
-				}
-				localMtx.Unlock()
-			}
-		}(file)
-	}
-	wg.Wait()
-
-	// merge local matches into global matches
-	mtx.Lock()
-	for match := range localMatches {
-		matches[match] = struct{}{}
-	}
-	mtx.Unlock()
-
-	return matches, len(matches) > 0
+	return matches, nil
 }
 
 // isRepo tests for the existence of a .git directory at dir.
@@ -265,7 +223,7 @@ func (g *G) Set(name, loc string) error {
 }
 
 func (g *G) SetSelf(self string) error {
-	_, err := g.where(self, false)
+	_, err := g.find(self, false)
 	if err != nil {
 		return err
 	}
@@ -281,7 +239,7 @@ func (g *G) Self() (string, error) {
 		return "", nil
 	}
 
-	where, err := g.where(self, false)
+	where, err := g.find(self, false)
 	if err != nil {
 		return "", err
 	}
