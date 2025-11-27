@@ -67,6 +67,44 @@ func TestSelfNonRepo(t *testing.T) {
 	}
 }
 
+func TestFindPathWithSlash(t *testing.T) {
+	// Create a temp dir structure
+	dir, err := os.MkdirTemp("", "gito-repro-test-")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(dir)
+
+	// Create a directory structure: src/github.com/my-user
+	targetDir := filepath.Join(dir, "src", "github.com", "my-user")
+	err = os.MkdirAll(targetDir, 0755)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	config := &Config{
+		Workspaces: []*Workspace{{
+			Name:    "default",
+			Path:    dir,
+			path:    []string{filepath.Join(dir, "src")},
+			Aliases: map[string]string{},
+			Custom:  map[string]string{},
+		}},
+		f: &MockFile{},
+	}
+	config.active = config.Workspaces[0]
+	g := New(config)
+
+	// Try to find "github.com/my-user"
+	// This mirrors the user's situation where Self is "github.com/r-medina"
+	matches, err := g.find("github.com/my-user", false)
+	if err != nil {
+		t.Errorf("find failed: %v", err)
+	} else if len(matches) != 1 || matches[0] != targetDir {
+		t.Errorf("find returned wrong result: %v, want %v", matches, targetDir)
+	}
+}
+
 type MockFile struct{}
 
 func (m *MockFile) Read(p []byte) (n int, err error)             { return 0, nil }

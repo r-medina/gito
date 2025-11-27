@@ -110,7 +110,17 @@ func (g *G) find(repo string, checkIsRepo bool) ([]string, error) {
 			}
 
 			// Check if the directory name matches the repo we are looking for
-			if d.Name() == repo {
+			matched := d.Name() == repo
+			if !matched && strings.Contains(repo, string(os.PathSeparator)) {
+				if strings.HasSuffix(path, repo) {
+					// Check boundary to avoid partial name match
+					if len(path) == len(repo) || path[len(path)-len(repo)-1] == os.PathSeparator {
+						matched = true
+					}
+				}
+			}
+
+			if matched {
 				if !checkIsRepo || isRepo(path) {
 					matches = append(matches, path)
 				}
@@ -119,7 +129,9 @@ func (g *G) find(repo string, checkIsRepo bool) ([]string, error) {
 			return nil
 		})
 		if err != nil {
-			// WalkDir error (shouldn't happen with our ignore policy, but good to log/handle if we had a logger)
+			// NOTE: WalkDir error (shouldn't happen with our ignore policy,
+			// but good to log/handle if we had a logger)
+			return nil, err
 		}
 	}
 
