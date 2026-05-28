@@ -183,11 +183,23 @@ gicd() {
         fi
         cd "$top_level" || return 1
     else
-        local repo_path
-        repo_path=$(gito where "$1" 2>/dev/null)
-        if [[ -z "$repo_path" ]]; then
+        local repo_paths
+        repo_paths=$(gito where "$1" 2>/dev/null)
+        if [[ -z "$repo_paths" ]]; then
             echo "Error: Repository '$1' not found."
             return 1
+        fi
+
+        local repo_path
+        local count
+        count=$(echo "$repo_paths" | wc -l | tr -d ' ')
+        if [[ "$count" -eq 1 ]]; then
+            repo_path="$repo_paths"
+        else
+            repo_path=$(echo "$repo_paths" | fzf --height=10 --prompt="Select repository: ")
+            if [[ -z "$repo_path" ]]; then
+                return 1
+            fi
         fi
         cd "$repo_path" || return 1
     fi
