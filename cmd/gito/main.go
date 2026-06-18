@@ -184,7 +184,7 @@ func main() {
 	cmd(g, flag.Args()[1:]...)
 }
 
-func exitIfErr(err error, format string, args ...interface{}) {
+func exitIfErr(err error, format string, args ...any) {
 	if err == nil {
 		return
 	}
